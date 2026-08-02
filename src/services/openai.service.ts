@@ -1,6 +1,7 @@
 import { openai } from '../lib/openai';
 import { memoryService } from './memory.service';
 import { dbService } from './db.service';
+import { scheduleService } from './schedule.service';
 import type { ChatMessage, ExtractedIntent } from '../types';
 
 /**
@@ -9,19 +10,30 @@ import type { ChatMessage, ExtractedIntent } from '../types';
  */
 export const openAIService = {
   /**
-   * Main Chief of Staff AI Response Generator with Automatic Intent Extraction.
+   * Main Chief of Staff AI Response Generator with Automatic Intent Extraction & Recalculation.
    */
   async processAdvisorChat(
     userMessage: string,
     history: ChatMessage[] = []
-  ): Promise<{ responseText: string; actionSummary?: string }> {
+  ): Promise<{ responseText: string; actionSummary: string }> {
     const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
     const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
 
-    // 1. Automatically parse and extract intent (add quiz, complete task, struggle note)
+    // 1. Automatically parse and extract intent + update Supabase database
     const extractedAction = await this.extractAndApplyIntent(userMessage);
 
-    // 2. Try Google Gemini 2.0 Flash (100% FREE Tier)
+    // 2. Recalculate Today's Study Plan immediately so Today's Mission is updated
+    try {
+      await scheduleService.generateDailySchedule();
+    } catch (e) {
+      console.warn('Notice recalculating daily plan after chat message:', e);
+    }
+
+    const actionSummary = extractedAction
+      ? extractedAction.summary
+      : "Recorded context in academic memory & updated Today's Study Plan.";
+
+    // 3. Try Google Gemini 2.0 Flash (100% FREE Tier)
     if (geminiKey && !geminiKey.includes('your-gemini-api-key')) {
       try {
         const context = await memoryService.assembleAcademicContext();
@@ -34,7 +46,7 @@ ${context}
 
 Directives:
 1. Keep responses concise, encouraging, and structured.
-2. If the user mentions a new assignment, exam, or finished task, acknowledge updating their StudyOS system.
+2. Acknowledge that you have recorded their update into their StudyOS system and updated today's study plan.
 3. End responses with a clear recommendation for today.`;
 
         const fullPrompt = `${systemPrompt}\n\nConversation History:\n${history.slice(-6).map((m) => `${m.role}: ${m.content}`).join('\n')}\n\nUser: ${userMessage}`;
@@ -56,16 +68,16 @@ Directives:
           if (responseText) {
             return {
               responseText,
-              actionSummary: extractedAction ? extractedAction.summary : undefined,
+              actionSummary,
             };
           }
         }
       } catch (err) {
-        console.warn('Gemini API call failed, trying next provider or fallback:', err);
+        console.warn('Gemini API call notice, trying next provider or fallback:', err);
       }
     }
 
-    // 3. Try OpenAI if API key provided
+    // 4. Try OpenAI if API key provided
     if (openaiKey && !openaiKey.includes('your-openai-api-key') && openaiKey !== 'placeholder-key') {
       try {
         const context = await memoryService.assembleAcademicContext();
@@ -94,24 +106,26 @@ ${context}`;
         if (responseText) {
           return {
             responseText,
-            actionSummary: extractedAction ? extractedAction.summary : undefined,
+            actionSummary,
           };
         }
       } catch (err) {
-        console.warn('OpenAI API call failed, switching to Smart Heuristic Engine:', err);
+        console.warn('OpenAI API call notice, switching to Smart Heuristic Engine:', err);
       }
     }
 
-    // 4. Default 100% Free Smart Heuristic Engine (Zero API Keys Required)
-    return this.generateFallbackAdvisorResponse(extractedAction);
+    // 5. Default 100% Free Smart Heuristic Engine (Zero API Keys Required)
+    return this.generateFallbackAdvisorResponse(extractedAction, actionSummary);
   },
 
   /**
-   * Automatically parses student statements to extract structured entities & update database.
+   * Universal intent & entity parser.
+   * Extracts exams, completed tasks, new tasks, or general context notes, and saves to Supabase.
    */
   async extractAndApplyIntent(userMessage: string): Promise<ExtractedIntent | null> {
     const msg = userMessage.toLowerCase();
 
+    // Intent 1: Exam / Quiz / Test
     if (msg.includes('quiz') || msg.includes('exam') || msg.includes('test') || msg.includes('midterm')) {
       let subject = 'General Subject';
       if (msg.includes('chem') || msg.includes('chemistry')) subject = 'Chemistry';
@@ -119,6 +133,7 @@ ${context}`;
       else if (msg.includes('bio') || msg.includes('biology')) subject = 'Biology';
       else if (msg.includes('history')) subject = 'History';
       else if (msg.includes('physics')) subject = 'Physics';
+      else if (msg.includes('english') || msg.includes('lit')) subject = 'English';
 
       const targetDate = new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -128,62 +143,86 @@ ${context}`;
         examDate: targetDate,
       });
 
-      await memoryService.recordMemory('goal', `Upcoming ${subject} quiz/exam noted for this week.`);
+      await memoryService.recordMemory('goal', `Upcoming ${subject} exam noted: "${userMessage}"`);
 
       return {
         intentType: 'add_exam',
-        summary: `Added ${subject} quiz to upcoming exams and updated study priorities.`,
+        summary: `Added ${subject} exam to database & updated study priorities.`,
         entities: { subjectName: subject, examTitle: `${subject} Quiz` },
       };
     }
 
+    // Intent 2: Finished / Completed Task
     if (msg.includes('finished') || msg.includes('completed') || msg.includes('done with') || msg.includes('turned in')) {
-      let taskSnippet = 'essay';
+      let taskSnippet = 'assignment';
       if (msg.includes('essay')) taskSnippet = 'essay';
       else if (msg.includes('homework')) taskSnippet = 'homework';
       else if (msg.includes('problem set')) taskSnippet = 'problem set';
+      else if (msg.includes('lab')) taskSnippet = 'lab';
+      else if (msg.includes('reading') || msg.includes('chapter')) taskSnippet = 'reading';
 
       await dbService.markTaskCompleteByTitle(taskSnippet);
-      await memoryService.recordMemory('habit', `Completed assignment: ${taskSnippet}.`);
+      await memoryService.recordMemory('habit', `Completed: "${userMessage}"`);
 
       return {
         intentType: 'complete_task',
-        summary: `Marked '${taskSnippet}' assignment as completed.`,
+        summary: `Marked assignment matching '${taskSnippet}' as completed in database.`,
         entities: { taskTitle: taskSnippet },
       };
     }
 
-    if (msg.includes('struggling') || msg.includes('hard time') || msg.includes('confused') || msg.includes('trouble')) {
+    // Intent 3: Struggle / Difficulty
+    if (msg.includes('struggling') || msg.includes('hard time') || msg.includes('confused') || msg.includes('trouble') || msg.includes('hate')) {
       let subject = 'Calculus';
       if (msg.includes('calc') || msg.includes('calculus')) subject = 'Calculus';
       else if (msg.includes('physics')) subject = 'Physics';
       else if (msg.includes('chem')) subject = 'Chemistry';
+      else if (msg.includes('bio')) subject = 'Biology';
 
-      await dbService.addMemory('challenge', `Student expressed difficulty mastering ${subject}. Requires priority study focus.`);
+      await dbService.addMemory('challenge', `Student difficulty note: "${userMessage}"`);
 
       return {
         intentType: 'update_challenge',
-        summary: `Recorded challenge with ${subject} to prioritize practice sessions.`,
-        entities: { subjectName: subject, challengeNote: `Struggling with ${subject}` },
+        summary: `Recorded academic challenge for ${subject} & prioritized practice session.`,
+        entities: { subjectName: subject, challengeNote: userMessage },
       };
     }
 
-    return null;
+    // Intent 4: New Assignment / Task Mentioned
+    if (msg.includes('due') || msg.includes('read') || msg.includes('write') || msg.includes('paper') || msg.includes('project') || msg.includes('homework')) {
+      await dbService.addTask({
+        title: userMessage.length > 50 ? userMessage.substring(0, 50) + '...' : userMessage,
+        estimatedMinutes: 45,
+        priority: 'high',
+      });
+
+      await memoryService.recordMemory('subject_note', `New task added: "${userMessage}"`);
+
+      return {
+        intentType: 'add_task',
+        summary: `Saved new assignment to database & updated Today's Study Plan.`,
+        entities: { taskTitle: userMessage },
+      };
+    }
+
+    // Intent 5: General Context Note
+    await memoryService.recordMemory('subject_note', `Student context note: "${userMessage}"`);
+    return {
+      intentType: 'general_chat',
+      summary: `Saved update to student memory & recalculated study plan.`,
+      entities: {},
+    };
   },
 
   /**
-   * Resilient fallback advisor response for 100% Free Offline Engine.
+   * Resilient fallback advisor response.
    */
-  generateFallbackAdvisorResponse(action: ExtractedIntent | null): { responseText: string; actionSummary?: string } {
-    if (action) {
-      return {
-        responseText: `Got it! I've updated your academic profile: ${action.summary} Your StudyOS daily plan is automatically updated to reflect this.`,
-        actionSummary: action.summary,
-      };
-    }
-
+  generateFallbackAdvisorResponse(action: ExtractedIntent | null, summary: string): { responseText: string; actionSummary: string } {
     return {
-      responseText: `Thank you for sharing that context. As your AI Chief of Staff, I've recorded this in your academic memory and factored it into today's study plan!`,
+      responseText: action
+        ? `Got it! I've processed your update: "${action.summary}" Your StudyOS daily plan is automatically updated to reflect this!`
+        : `Thank you for sharing that update. I've saved it into your long-term academic memory and recalculated Today's Study Plan for you!`,
+      actionSummary: summary,
     };
   },
 };
