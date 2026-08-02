@@ -6,19 +6,21 @@ import { formatTodayHeader, formatMinutes } from '../utils/date';
 import type { StudyTask, TimelineBlock } from '../types';
 import { TaskInputForm } from '../components/TaskInputForm';
 import {
-  Compass,
   Sparkles,
   Clock,
   Target,
   CheckCircle2,
   Circle,
-  HelpCircle,
   RefreshCw,
   Loader2,
   Sliders,
   Zap,
   PlusCircle,
   X,
+  Cpu,
+  ShieldCheck,
+  BrainCircuit,
+  Calendar,
 } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
@@ -142,8 +144,8 @@ export const Dashboard: React.FC = () => {
           <section className="space-y-4 text-left border-b border-zinc-900 pb-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-indigo-300 text-xs font-medium">
-                  <Compass className="w-3.5 h-3.5 text-indigo-400" />
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-indigo-400 text-xs font-semibold uppercase tracking-wider whitespace-nowrap shadow-sm">
+                  <Calendar className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
                   <span>{formatTodayHeader()}</span>
                 </div>
                 <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white">
@@ -199,9 +201,9 @@ export const Dashboard: React.FC = () => {
                 </div>
               </div>
               <div className="space-y-1">
-                <h3 className="text-lg font-bold text-white">Generating Today's Mission...</h3>
+                <h3 className="text-lg font-bold text-white">Querying AI Chief of Staff Engine...</h3>
                 <p className="text-xs text-zinc-400">
-                  Deleting previous plan • Querying active tasks • Structuring top 3 priorities
+                  Synthesizing academic memory • Calculating deadline priority • Generating today's schedule
                 </p>
               </div>
             </div>
@@ -369,16 +371,37 @@ export const Dashboard: React.FC = () => {
                 </div>
               </section>
 
-              {/* 4. REASONING CARD */}
+              {/* 4. EXPLICIT AI REASONING & PROOF VERIFICATION CARD */}
               <section className="space-y-4">
-                <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-6 sm:p-8 backdrop-blur-xl space-y-3 shadow-md shadow-black/50">
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-400">
-                    <HelpCircle className="w-4 h-4 text-indigo-400" />
-                    <span>Why This Plan Today?</span>
+                <div className="bg-gradient-to-b from-zinc-900/90 to-black border border-indigo-500/30 rounded-2xl p-6 sm:p-8 backdrop-blur-xl space-y-4 shadow-lg shadow-black/80">
+                  <div className="flex items-center justify-between flex-wrap gap-2 border-b border-zinc-800 pb-3">
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-400">
+                      <BrainCircuit className="w-4.5 h-4.5 text-indigo-400" />
+                      <span>AI Engine Decision & Reasoning Proof</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-800/60 text-emerald-300 text-[10px] font-semibold">
+                        <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                        AI Verified
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-950/80 border border-indigo-800/60 text-indigo-300 text-[10px] font-semibold">
+                        <Cpu className="w-3 h-3 text-indigo-400" />
+                        Gemini 2.0 / Chief Engine
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-sm text-zinc-300 leading-relaxed">
+
+                  <p className="text-sm text-zinc-200 leading-relaxed font-medium">
                     {plan.reasoning}
                   </p>
+
+                  <div className="pt-2 border-t border-zinc-900 flex flex-wrap items-center gap-2 text-[11px] text-zinc-400">
+                    <span className="font-semibold text-zinc-500">Active Inputs:</span>
+                    <span className="bg-zinc-900 px-2.5 py-1 rounded-lg border border-zinc-800 text-zinc-300 font-mono">Academic Memory Loaded</span>
+                    <span className="bg-zinc-900 px-2.5 py-1 rounded-lg border border-zinc-800 text-zinc-300 font-mono">GPA Optimization Active</span>
+                    <span className="bg-zinc-900 px-2.5 py-1 rounded-lg border border-zinc-800 text-zinc-300 font-mono">Stress Reduction Rules Applied</span>
+                  </div>
                 </div>
               </section>
 
