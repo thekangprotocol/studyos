@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { Header } from './components/Header';
 import { Dashboard } from './pages/Dashboard';
 import { LandingPage } from './pages/LandingPage';
@@ -12,7 +13,7 @@ import { Loader2 } from 'lucide-react';
 
 /**
  * Main Content Router
- * Manages Auth state, Onboarding redirection, and Navigation between Today's Mission, All Tasks & Advisor Chat.
+ * Manages Auth state, Onboarding redirection, Theme, and Navigation between Today's Mission, All Tasks & Advisor Chat.
  */
 const MainContent: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
@@ -40,8 +41,8 @@ const MainContent: React.FC = () => {
   if (authLoading || (user && profileLoading)) {
     return (
       <div className="min-h-screen bg-black flex flex-col justify-center items-center text-zinc-400 gap-3">
-        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-        <p className="text-xs font-medium tracking-wide text-zinc-500 uppercase font-mono">Initializing StudyOS Chief of Staff...</p>
+        <Loader2 className="w-8 h-8 text-white animate-spin" />
+        <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase font-mono">Initializing StudyOS Chief of Staff...</p>
       </div>
     );
   }
@@ -58,7 +59,7 @@ const MainContent: React.FC = () => {
 
   // 4. Authenticated & Onboarded -> Main App View
   return (
-    <div className="min-h-screen bg-black text-zinc-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-white dark:bg-black text-zinc-900 dark:text-zinc-100 flex flex-col font-sans transition-colors">
       <Header activeTab={activeTab} setActiveTab={setActiveTab} />
       <div className="flex-1">
         {activeTab === 'dashboard' && <Dashboard />}
@@ -71,9 +72,11 @@ const MainContent: React.FC = () => {
 
 export const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <MainContent />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <MainContent />
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 

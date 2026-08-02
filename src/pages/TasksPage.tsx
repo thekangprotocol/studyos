@@ -66,27 +66,27 @@ export const TasksPage: React.FC = () => {
   });
 
   return (
-    <main className="py-8 sm:py-12 pb-24 text-zinc-100 bg-black min-h-[calc(100vh-80px)]">
+    <main className="py-8 sm:py-12 pb-24 text-zinc-900 dark:text-zinc-100 bg-white dark:bg-black min-h-[calc(100vh-80px)] transition-colors">
       <Container>
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-900 pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-200 dark:border-zinc-900 pb-6">
             <div className="space-y-1">
-              <div className="flex items-center gap-2 text-indigo-400 font-semibold uppercase tracking-wider text-xs">
+              <div className="flex items-center gap-2 text-black dark:text-white font-extrabold uppercase tracking-wider text-xs">
                 <CheckSquare className="w-4 h-4" />
                 <span>Academic Workload Backlog</span>
               </div>
-              <h1 className="text-3xl font-extrabold text-white tracking-tight">
+              <h1 className="text-3xl sm:text-5xl font-black text-black dark:text-white tracking-tight font-heading">
                 All Things To Get Done
               </h1>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
                 View, complete, or delete tasks and exams added manually or extracted by your AI Chief of Staff.
               </p>
             </div>
 
             <button
               onClick={() => setShowAddForm(true)}
-              className="px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-indigo-600/20 flex items-center gap-2 transition-all self-start sm:self-auto"
+              className="px-4 py-3 bg-black dark:bg-white text-white dark:text-black font-extrabold text-xs rounded-xl shadow-lg flex items-center gap-2 transition-all hover:opacity-90 self-start sm:self-auto"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Add New Task</span>
@@ -95,8 +95,8 @@ export const TasksPage: React.FC = () => {
 
           {/* Delete Notification Banner */}
           {deleteMsg && (
-            <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-xs text-zinc-300 flex items-center gap-2 animate-in fade-in">
-              <AlertCircle className="w-4 h-4 text-indigo-400 shrink-0" />
+            <div className="p-4 bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-2xl text-xs font-bold text-black dark:text-white flex items-center gap-2 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{deleteMsg}</span>
             </div>
           )}
@@ -118,8 +118,8 @@ export const TasksPage: React.FC = () => {
           {exams.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-                  <Calendar className="w-4.5 h-4.5 text-indigo-400" />
+                <h2 className="text-xl font-extrabold text-black dark:text-white tracking-tight flex items-center gap-2 font-heading">
+                  <Calendar className="w-5 h-5" />
                   <span>Upcoming Exams & Quizzes ({exams.length})</span>
                 </h2>
               </div>
@@ -128,21 +128,21 @@ export const TasksPage: React.FC = () => {
                 {exams.map((e) => (
                   <div
                     key={e.id}
-                    className="p-5 bg-zinc-900/60 border border-zinc-800 rounded-2xl flex items-start justify-between gap-3 shadow-md backdrop-blur-xl"
+                    className="p-5 bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-2xl flex items-start justify-between gap-3 shadow-md backdrop-blur-xl"
                   >
                     <div className="space-y-1 min-w-0">
-                      <span className="text-[10px] font-semibold text-indigo-300 bg-indigo-950 px-2 py-0.5 rounded border border-indigo-800/40">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-black dark:text-white bg-zinc-200 dark:bg-black px-2.5 py-0.5 rounded border border-zinc-300 dark:border-zinc-800">
                         {e.courseName}
                       </span>
-                      <h4 className="text-sm font-semibold text-white truncate">{e.title}</h4>
-                      <p className="text-xs text-zinc-400">
+                      <h4 className="text-base font-bold text-black dark:text-white truncate">{e.title}</h4>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 font-mono">
                         Date: {new Date(e.examDate).toLocaleDateString()}
                       </p>
                     </div>
 
                     <button
                       onClick={() => handleDeleteExam(e.id, e.title)}
-                      className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-950/40 rounded-xl transition-colors shrink-0"
+                      className="p-2 text-zinc-400 hover:text-red-500 rounded-xl transition-colors shrink-0"
                       title="Delete Exam"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -156,21 +156,21 @@ export const TasksPage: React.FC = () => {
           {/* SECTION 2: TASKS & ASSIGNMENTS */}
           <section className="space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-                <BookOpen className="w-4.5 h-4.5 text-indigo-400" />
+              <h2 className="text-xl font-extrabold text-black dark:text-white tracking-tight flex items-center gap-2 font-heading">
+                <BookOpen className="w-5 h-5" />
                 <span>Assignments & Study Tasks ({filteredTasks.length})</span>
               </h2>
 
               {/* Filter Switcher */}
-              <div className="flex bg-zinc-900/80 p-1 rounded-xl border border-zinc-800 text-xs">
+              <div className="flex bg-zinc-100 dark:bg-zinc-900/80 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs">
                 {(['all', 'active', 'completed'] as const).map((st) => (
                   <button
                     key={st}
                     onClick={() => setFilterStatus(st)}
-                    className={`px-3 py-1 rounded-lg font-semibold capitalize transition-all ${
+                    className={`px-3.5 py-1 rounded-lg font-bold capitalize transition-all ${
                       filterStatus === st
-                        ? 'bg-indigo-600 text-white shadow-sm'
-                        : 'text-zinc-400 hover:text-white'
+                        ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm'
+                        : 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
                     }`}
                   >
                     {st}
@@ -181,13 +181,13 @@ export const TasksPage: React.FC = () => {
 
             {loading ? (
               <div className="py-12 text-center text-zinc-500 space-y-2">
-                <Loader2 className="w-6 h-6 animate-spin text-indigo-400 mx-auto" />
-                <p className="text-xs">Loading all workload tasks from Supabase...</p>
+                <Loader2 className="w-6 h-6 animate-spin text-black dark:text-white mx-auto" />
+                <p className="text-xs font-bold">Loading all workload tasks from Supabase...</p>
               </div>
             ) : filteredTasks.length === 0 ? (
-              <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-12 text-center space-y-3">
-                <CheckSquare className="w-8 h-8 text-zinc-600 mx-auto" />
-                <h4 className="text-sm font-semibold text-zinc-300">No tasks found</h4>
+              <div className="bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-12 text-center space-y-3">
+                <CheckSquare className="w-8 h-8 text-zinc-400 mx-auto" />
+                <h4 className="text-base font-bold text-black dark:text-white">No tasks found</h4>
                 <p className="text-xs text-zinc-500 max-w-sm mx-auto">
                   {filterStatus === 'all'
                     ? 'Your backlog is completely empty! Add tasks manually or type updates into your Chief of Staff Chat.'
@@ -201,38 +201,38 @@ export const TasksPage: React.FC = () => {
                     key={task.id}
                     className={`p-5 rounded-2xl border transition-all flex items-start gap-4 shadow-md ${
                       task.completed
-                        ? 'bg-black/40 border-zinc-900 opacity-60'
-                        : 'bg-zinc-900/60 border-zinc-800 hover:border-indigo-500/40 backdrop-blur-xl'
+                        ? 'bg-zinc-100 text-zinc-400 dark:bg-black/40 dark:border-zinc-900 opacity-60'
+                        : 'bg-zinc-50 border-zinc-200 dark:bg-zinc-900/60 dark:border-zinc-800 hover:border-black dark:hover:border-white'
                     }`}
                   >
                     {/* Checkbox */}
                     <button
                       onClick={() => handleToggleTask(task.id, task.completed)}
-                      className="mt-1 shrink-0 text-zinc-500 hover:text-indigo-400 transition-colors"
+                      className="mt-1 shrink-0 text-zinc-400 hover:text-black dark:hover:text-white transition-colors"
                     >
                       {task.completed ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                        <CheckCircle2 className="w-5 h-5 text-black dark:text-white" />
                       ) : (
-                        <Circle className="w-5 h-5 text-zinc-600" />
+                        <Circle className="w-5 h-5 text-zinc-400 dark:text-zinc-600" />
                       )}
                     </button>
 
                     {/* Content */}
                     <div className="flex-1 space-y-1.5 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[10px] font-semibold text-indigo-300 bg-indigo-950 px-2.5 py-0.5 rounded-full border border-indigo-800/40">
+                        <span className="text-[10px] font-bold text-black dark:text-white bg-zinc-200 dark:bg-zinc-800 px-2.5 py-0.5 rounded-full border border-zinc-300 dark:border-zinc-700">
                           {task.subjectName}
                         </span>
                         {task.dueDate && (
-                          <span className="text-[10px] text-zinc-400 bg-black px-2 py-0.5 rounded border border-zinc-800 font-mono">
+                          <span className="text-[10px] text-zinc-600 dark:text-zinc-400 bg-white dark:bg-black px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-800 font-mono font-semibold">
                             Due {new Date(task.dueDate).toLocaleDateString()}
                           </span>
                         )}
                       </div>
 
                       <h4
-                        className={`text-sm font-semibold text-zinc-100 leading-snug ${
-                          task.completed ? 'line-through text-zinc-500' : ''
+                        className={`text-base font-bold text-black dark:text-white leading-snug ${
+                          task.completed ? 'line-through text-zinc-400 dark:text-zinc-500' : ''
                         }`}
                       >
                         {task.title}
@@ -241,14 +241,14 @@ export const TasksPage: React.FC = () => {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2 shrink-0">
-                      <div className="hidden sm:flex items-center gap-1 text-zinc-400 font-mono text-xs bg-black px-2.5 py-1 rounded-lg border border-zinc-800">
-                        <Clock className="w-3.5 h-3.5 text-indigo-400" />
+                      <div className="hidden sm:flex items-center gap-1 text-black dark:text-zinc-300 font-mono text-xs bg-white dark:bg-black px-2.5 py-1 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                        <Clock className="w-3.5 h-3.5" />
                         <span>{task.estimatedMinutes}m</span>
                       </div>
 
                       <button
                         onClick={() => handleDeleteTask(task.id, task.title)}
-                        className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-950/40 rounded-xl transition-colors"
+                        className="p-2 text-zinc-400 hover:text-red-500 rounded-xl transition-colors"
                         title="Delete Task"
                       >
                         <Trash2 className="w-4 h-4" />
