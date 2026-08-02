@@ -328,4 +328,26 @@ export const dbService = {
       createdAt: m.created_at,
     }));
   },
+
+  /**
+   * Delete user account data permanently from Supabase & Local Storage.
+   */
+  async deleteUserAccount(): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    localStorage.removeItem(`onboarding_completed_${user.id}`);
+
+    // Delete user record from public.users (Cascades to courses, tasks, exams, memories, messages, plans)
+    const { error } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', user.id);
+
+    if (error) {
+      console.warn('Notice deleting user row in public.users:', error.message);
+    }
+
+    return true;
+  },
 };
