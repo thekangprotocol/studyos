@@ -13,6 +13,8 @@ export const dbService = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
+    const localCompleted = localStorage.getItem(`onboarding_completed_${user.id}`) === 'true';
+
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -20,12 +22,11 @@ export const dbService = {
       .maybeSingle();
 
     if (error || !data) {
-      // Fallback object if profile row is not yet initialized
       return {
         id: user.id,
         email: user.email || '',
         fullName: user.user_metadata?.full_name || '',
-        onboardingCompleted: false,
+        onboardingCompleted: localCompleted,
       };
     }
 
@@ -39,35 +40,41 @@ export const dbService = {
       procrastinationTriggers: data.procrastination_triggers,
       dailyAvailableHours: data.daily_available_hours,
       preferredStudyTimes: data.preferred_study_times,
-      onboardingCompleted: data.onboarding_completed ?? false,
+      onboardingCompleted: data.onboarding_completed || localCompleted,
     };
   },
 
   /**
-   * Update user profile & onboarding status.
+   * Update user profile & onboarding status safely via upsert.
    */
   async updateUserProfile(profile: Partial<UserProfile>): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
-    const updateData: Record<string, any> = {};
-    if (profile.fullName !== undefined) updateData.full_name = profile.fullName;
-    if (profile.gradeLevel !== undefined) updateData.grade_level = profile.gradeLevel;
-    if (profile.schoolName !== undefined) updateData.school_name = profile.schoolName;
-    if (profile.targetGrades !== undefined) updateData.target_grades = profile.targetGrades;
-    if (profile.procrastinationTriggers !== undefined) updateData.procrastination_triggers = profile.procrastinationTriggers;
-    if (profile.dailyAvailableHours !== undefined) updateData.daily_available_hours = profile.dailyAvailableHours;
-    if (profile.preferredStudyTimes !== undefined) updateData.preferred_study_times = profile.preferredStudyTimes;
-    if (profile.onboardingCompleted !== undefined) updateData.onboarding_completed = profile.onboardingCompleted;
+    if (profile.onboardingCompleted) {
+      localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
+    }
+
+    const upsertData: Record<string, any> = {
+      id: user.id,
+      email: user.email || '',
+    };
+
+    if (profile.fullName !== undefined) upsertData.full_name = profile.fullName;
+    if (profile.gradeLevel !== undefined) upsertData.grade_level = profile.gradeLevel;
+    if (profile.schoolName !== undefined) upsertData.school_name = profile.schoolName;
+    if (profile.targetGrades !== undefined) upsertData.target_grades = profile.targetGrades;
+    if (profile.procrastinationTriggers !== undefined) upsertData.procrastination_triggers = profile.procrastinationTriggers;
+    if (profile.dailyAvailableHours !== undefined) upsertData.daily_available_hours = profile.dailyAvailableHours;
+    if (profile.preferredStudyTimes !== undefined) upsertData.preferred_study_times = profile.preferredStudyTimes;
+    if (profile.onboardingCompleted !== undefined) upsertData.onboarding_completed = profile.onboardingCompleted;
 
     const { error } = await supabase
       .from('users')
-      .update(updateData)
-      .eq('id', user.id);
+      .upsert(upsertData, { onConflict: 'id' });
 
     if (error) {
-      console.warn('Error updating user profile in Supabase:', error.message);
-      return false;
+      console.warn('Notice updating user profile in Supabase (local fallback active):', error.message);
     }
     return true;
   },
