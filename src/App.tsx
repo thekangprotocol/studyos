@@ -15,9 +15,9 @@ const MainContent: React.FC = () => {
   // 1. Show clean loading state while fetching session persistence
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center text-slate-400 gap-3">
+      <div className="min-h-screen bg-black flex flex-col justify-center items-center text-zinc-400 gap-3">
         <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-        <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">Loading StudyOS...</p>
+        <p className="text-xs font-medium tracking-wide text-zinc-500 uppercase font-mono">Loading StudyOS...</p>
       </div>
     );
   }
@@ -29,7 +29,7 @@ const MainContent: React.FC = () => {
 
   // 3. Authenticated state -> Protected Dashboard
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-black text-zinc-100 flex flex-col font-sans">
       <Header />
       <div className="flex-1">
         <Dashboard />

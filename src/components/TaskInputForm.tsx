@@ -103,8 +103,6 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
       });
 
       setSuccessMsg('Task and daily plan successfully saved to Supabase!');
-      
-      // Reset main fields
       setAssignmentTitle('');
       setDescription('');
 
@@ -123,22 +121,22 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
   };
 
   return (
-    <div className="bg-slate-900/90 border border-slate-800/90 rounded-3xl p-6 sm:p-10 backdrop-blur-xl shadow-2xl space-y-6 max-w-2xl mx-auto">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+    <div className="bg-zinc-900/90 border border-zinc-800 rounded-3xl p-6 sm:p-10 backdrop-blur-xl shadow-2xl space-y-6 max-w-2xl mx-auto">
+      <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-500/30">
+          <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
             <PlusCircle className="w-5 h-5" />
           </div>
           <div>
             <h3 className="text-xl font-bold text-white tracking-tight">Add New Study Task</h3>
-            <p className="text-xs text-slate-400">Save to your Supabase database & recalculate your plan</p>
+            <p className="text-xs text-zinc-400">Save to your Supabase database & recalculate your plan</p>
           </div>
         </div>
 
         {onCancel && (
           <button
             onClick={onCancel}
-            className="text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700 transition-colors"
+            className="text-xs text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg border border-zinc-800 hover:border-zinc-700 transition-colors"
           >
             Cancel
           </button>
@@ -165,20 +163,20 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
         {/* 1. COURSE FIELD */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="sm:col-span-2 space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
               Course Name <span className="text-indigo-400">*</span>
             </label>
             <div className="relative">
-              <BookOpen className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+              <BookOpen className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
               <input
                 type="text"
                 value={courseTitle}
                 onChange={(e) => setCourseTitle(e.target.value)}
                 placeholder="e.g. Calculus II or Computer Science"
-                className={`w-full pl-10 pr-4 py-3 bg-slate-950/80 border rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none transition-all ${
+                className={`w-full pl-10 pr-4 py-3 bg-black border rounded-xl text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none transition-all ${
                   errors.courseTitle
                     ? 'border-red-500/80 focus:border-red-500'
-                    : 'border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
+                    : 'border-zinc-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
                 }`}
               />
             </div>
@@ -188,7 +186,7 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
               Course Code
             </label>
             <input
@@ -196,27 +194,27 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
               value={courseCode}
               onChange={(e) => setCourseCode(e.target.value)}
               placeholder="MATH 202"
-              className="w-full px-4 py-3 bg-slate-950/80 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+              className="w-full px-4 py-3 bg-black border border-zinc-800 rounded-xl text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
             />
           </div>
         </div>
 
         {/* 2. ASSIGNMENT FIELD */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
             Assignment / Task Title <span className="text-indigo-400">*</span>
           </label>
           <div className="relative">
-            <FileText className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+            <FileText className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
             <input
               type="text"
               value={assignmentTitle}
               onChange={(e) => setAssignmentTitle(e.target.value)}
               placeholder="e.g. Problem Set 4: Integration by Parts"
-              className={`w-full pl-10 pr-4 py-3 bg-slate-950/80 border rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none transition-all ${
+              className={`w-full pl-10 pr-4 py-3 bg-black border rounded-xl text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none transition-all ${
                 errors.assignmentTitle
                   ? 'border-red-500/80 focus:border-red-500'
-                  : 'border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
+                  : 'border-zinc-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
               }`}
             />
           </div>
@@ -228,19 +226,19 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
         {/* 3. DEADLINE FIELD */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
               Deadline Date & Time <span className="text-indigo-400">*</span>
             </label>
             <div className="relative">
-              <Calendar className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+              <Calendar className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
               <input
                 type="datetime-local"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className={`w-full pl-10 pr-4 py-3 bg-slate-950/80 border rounded-xl text-sm text-slate-100 focus:outline-none transition-all ${
+                className={`w-full pl-10 pr-4 py-3 bg-black border rounded-xl text-sm text-zinc-100 focus:outline-none transition-all ${
                   errors.dueDate
                     ? 'border-red-500/80 focus:border-red-500'
-                    : 'border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
+                    : 'border-zinc-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
                 }`}
               />
             </div>
@@ -251,11 +249,11 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
 
           {/* 4. ESTIMATED DURATION FIELD */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
               Estimated Duration (Minutes) <span className="text-indigo-400">*</span>
             </label>
             <div className="relative">
-              <Clock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+              <Clock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
               <input
                 type="number"
                 min="5"
@@ -264,10 +262,10 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
                 value={estimatedMinutes}
                 onChange={(e) => setEstimatedMinutes(e.target.value)}
                 placeholder="45"
-                className={`w-full pl-10 pr-4 py-3 bg-slate-950/80 border rounded-xl text-sm text-slate-100 focus:outline-none transition-all ${
+                className={`w-full pl-10 pr-4 py-3 bg-black border rounded-xl text-sm text-zinc-100 focus:outline-none transition-all ${
                   errors.estimatedMinutes
                     ? 'border-red-500/80 focus:border-red-500'
-                    : 'border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
+                    : 'border-zinc-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
                 }`}
               />
             </div>
@@ -279,7 +277,7 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
 
         {/* 5. IMPORTANCE / PRIORITY SELECTOR */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
             Importance / Priority Level
           </label>
           <div className="grid grid-cols-4 gap-2">
@@ -291,7 +289,7 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
                 className={`py-2.5 text-xs font-semibold capitalize rounded-xl border transition-all ${
                   priority === lvl
                     ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20'
-                    : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
+                    : 'bg-black text-zinc-400 border-zinc-800 hover:border-zinc-700'
                 }`}
               >
                 {lvl}
@@ -302,11 +300,11 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
 
         {/* 6. AVAILABLE STUDY TIME TODAY */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
             Available Study Time Today (Minutes) <span className="text-indigo-400">*</span>
           </label>
           <div className="relative">
-            <Sliders className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Sliders className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
             <input
               type="number"
               min="15"
@@ -315,14 +313,14 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
               value={availableStudyMinutesToday}
               onChange={(e) => setAvailableStudyMinutesToday(e.target.value)}
               placeholder="180 (3 hours)"
-              className={`w-full pl-10 pr-4 py-3 bg-slate-950/80 border rounded-xl text-sm text-slate-100 focus:outline-none transition-all ${
+              className={`w-full pl-10 pr-4 py-3 bg-black border rounded-xl text-sm text-zinc-100 focus:outline-none transition-all ${
                 errors.availableStudyMinutesToday
                   ? 'border-red-500/80 focus:border-red-500'
-                  : 'border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
+                  : 'border-zinc-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
               }`}
             />
           </div>
-          <span className="text-[11px] text-slate-400">
+          <span className="text-[11px] text-zinc-400">
             Current setting: {Math.floor(Number(availableStudyMinutesToday) / 60)}h {Number(availableStudyMinutesToday) % 60}m
           </span>
           {errors.availableStudyMinutesToday && (

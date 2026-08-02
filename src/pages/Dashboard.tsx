@@ -119,7 +119,7 @@ export const Dashboard: React.FC = () => {
   const completedCount = tasks.filter((t) => t.completed).length;
 
   return (
-    <main className="py-10 sm:py-16 pb-24 text-slate-100 selection:bg-indigo-500 selection:text-white">
+    <main className="py-10 sm:py-16 pb-24 text-zinc-100 selection:bg-indigo-500 selection:text-white bg-black">
       <Container>
         <div className="max-w-3xl mx-auto space-y-12">
           {/* SUCCESS NOTIFICATION TOAST */}
@@ -139,17 +139,17 @@ export const Dashboard: React.FC = () => {
           )}
 
           {/* GREETING SECTION */}
-          <section className="space-y-4 text-left border-b border-slate-800/60 pb-8">
+          <section className="space-y-4 text-left border-b border-zinc-900 pb-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-950/50 border border-indigo-800/40 text-indigo-300 text-xs font-medium">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-indigo-300 text-xs font-medium">
                   <Compass className="w-3.5 h-3.5 text-indigo-400" />
                   <span>{formatTodayHeader()}</span>
                 </div>
                 <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white">
                   Good day, {getUserName()}.
                 </h1>
-                <p className="text-slate-400 text-base sm:text-lg">
+                <p className="text-zinc-400 text-base sm:text-lg">
                   Here is your focused study mission for today. No overthinking. Just execution.
                 </p>
               </div>
@@ -158,7 +158,7 @@ export const Dashboard: React.FC = () => {
                 <button
                   onClick={() => setShowTaskForm(true)}
                   disabled={loading}
-                  className="px-4 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-semibold text-xs rounded-xl flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 font-semibold text-xs rounded-xl flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <PlusCircle className="w-4 h-4 text-indigo-400" />
                   <span>Add Task</span>
@@ -192,7 +192,7 @@ export const Dashboard: React.FC = () => {
 
           {/* LOADING ANIMATION CARD */}
           {loading && (
-            <div className="bg-slate-900/80 border border-indigo-500/30 rounded-3xl p-12 text-center space-y-5 backdrop-blur-xl shadow-2xl animate-pulse">
+            <div className="bg-zinc-900/80 border border-indigo-500/30 rounded-3xl p-12 text-center space-y-5 backdrop-blur-xl shadow-2xl animate-pulse">
               <div className="relative inline-block">
                 <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 border border-indigo-500/40 text-indigo-400 flex items-center justify-center mx-auto">
                   <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
@@ -200,7 +200,7 @@ export const Dashboard: React.FC = () => {
               </div>
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-white">Generating Today's Mission...</h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-zinc-400">
                   Deleting previous plan • Querying active tasks • Structuring top 3 priorities
                 </p>
               </div>
@@ -217,20 +217,20 @@ export const Dashboard: React.FC = () => {
           {plan && !loading && (
             <>
               {/* 1. TODAY'S MISSION CARD */}
-              <section className="relative overflow-hidden bg-gradient-to-b from-indigo-950/40 via-slate-900/90 to-slate-950 border border-indigo-500/20 rounded-3xl p-8 sm:p-10 backdrop-blur-2xl shadow-xl shadow-slate-950/50 space-y-6">
-                <div className="flex items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+              <section className="relative overflow-hidden bg-gradient-to-b from-zinc-900 via-black to-black border border-zinc-800/80 rounded-3xl p-8 sm:p-10 backdrop-blur-2xl shadow-xl shadow-black/80 space-y-6">
+                <div className="flex items-center justify-between gap-4 border-b border-zinc-900 pb-4">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-400">
                     <Target className="w-4 h-4 text-indigo-400" />
                     <span>Today's Primary Mission</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-900/80 px-3 py-1 rounded-full border border-slate-800">
+                  <div className="flex items-center gap-2 text-xs text-zinc-400 bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">
                     <Clock className="w-3.5 h-3.5 text-indigo-400" />
                     <span>{formatMinutes(plan.totalEstimatedMinutes)} target</span>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <span className="text-xs font-medium text-indigo-300 uppercase tracking-widest bg-indigo-900/40 px-2.5 py-1 rounded-md border border-indigo-700/40">
+                  <span className="text-xs font-medium text-indigo-300 uppercase tracking-widest bg-indigo-950 px-2.5 py-1 rounded-md border border-indigo-800/40">
                     {plan.focusSubject}
                   </span>
                   <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-snug">
@@ -238,7 +238,7 @@ export const Dashboard: React.FC = () => {
                   </h2>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 text-xs text-slate-400">
+                <div className="flex items-center justify-between pt-2 text-xs text-zinc-400">
                   <span>
                     Status:{' '}
                     <strong className="text-indigo-300 font-medium">
@@ -264,7 +264,7 @@ export const Dashboard: React.FC = () => {
                   <h3 className="text-xl font-bold text-white tracking-tight">
                     Top 3 Priorities
                   </h3>
-                  <span className="text-xs text-slate-500 font-mono">
+                  <span className="text-xs text-zinc-500 font-mono">
                     Focus Mode Active
                   </span>
                 </div>
@@ -276,39 +276,39 @@ export const Dashboard: React.FC = () => {
                       onClick={() => toggleTask(task.id)}
                       className={`cursor-pointer p-6 rounded-2xl border transition-all flex items-start gap-4 shadow-md ${
                         task.completed
-                          ? 'bg-slate-950/40 border-slate-800/50 opacity-60'
-                          : 'bg-slate-900/60 border-slate-800 hover:border-indigo-500/40 backdrop-blur-xl shadow-slate-950/40'
+                          ? 'bg-black/40 border-zinc-900 opacity-60'
+                          : 'bg-zinc-900/60 border-zinc-800 hover:border-indigo-500/40 backdrop-blur-xl shadow-black/60'
                       }`}
                     >
-                      <button className="mt-1 shrink-0 text-slate-500 hover:text-indigo-400 transition-colors">
+                      <button className="mt-1 shrink-0 text-zinc-500 hover:text-indigo-400 transition-colors">
                         {task.completed ? (
                           <CheckCircle2 className="w-6 h-6 text-emerald-400" />
                         ) : (
-                          <Circle className="w-6 h-6 text-slate-600" />
+                          <Circle className="w-6 h-6 text-zinc-600" />
                         )}
                       </button>
 
                       <div className="flex-1 space-y-2 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/50">
+                          <span className="text-[10px] font-mono font-semibold text-zinc-400 uppercase tracking-wider bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800">
                             Priority 0{idx + 1}
                           </span>
-                          <span className="text-[10px] font-semibold text-indigo-300 bg-indigo-950/60 px-2.5 py-0.5 rounded-full border border-indigo-800/40">
+                          <span className="text-[10px] font-semibold text-indigo-300 bg-indigo-950/80 px-2.5 py-0.5 rounded-full border border-indigo-800/40">
                             {task.subjectName}
                           </span>
                           {getPriorityBadge(task.priority)}
                         </div>
 
                         <h4
-                          className={`text-base font-semibold text-slate-100 leading-snug ${
-                            task.completed ? 'line-through text-slate-500' : ''
+                          className={`text-base font-semibold text-zinc-100 leading-snug ${
+                            task.completed ? 'line-through text-zinc-500' : ''
                           }`}
                         >
                           {task.title}
                         </h4>
                       </div>
 
-                      <div className="text-right shrink-0 flex items-center gap-1 text-slate-400 font-mono text-xs bg-slate-950/60 px-2.5 py-1 rounded-lg border border-slate-800">
+                      <div className="text-right shrink-0 flex items-center gap-1 text-zinc-400 font-mono text-xs bg-black px-2.5 py-1 rounded-lg border border-zinc-800">
                         <Clock className="w-3.5 h-3.5 text-indigo-400" />
                         <span>{task.estimatedMinutes}m</span>
                       </div>
@@ -323,10 +323,10 @@ export const Dashboard: React.FC = () => {
                   <h3 className="text-xl font-bold text-white tracking-tight">
                     Study Schedule & Timeline
                   </h3>
-                  <span className="text-xs text-slate-500 font-mono">Today</span>
+                  <span className="text-xs text-zinc-500 font-mono">Today</span>
                 </div>
 
-                <div className="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-6 sm:p-8 backdrop-blur-xl space-y-6 shadow-md shadow-slate-950/40">
+                <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-6 sm:p-8 backdrop-blur-xl space-y-6 shadow-md shadow-black/50">
                   {timeline.map((block, idx) => (
                     <div
                       key={block.id}
@@ -335,10 +335,10 @@ export const Dashboard: React.FC = () => {
                     >
                       {/* Vertical connector line */}
                       {idx !== timeline.length - 1 && (
-                        <div className="absolute left-[11px] top-7 bottom-0 w-[2px] bg-slate-800 group-hover:bg-indigo-500/20 transition-colors" />
+                        <div className="absolute left-[11px] top-7 bottom-0 w-[2px] bg-zinc-800 group-hover:bg-indigo-500/20 transition-colors" />
                       )}
 
-                      <button className="mt-0.5 shrink-0 z-10 bg-slate-950 rounded-full">
+                      <button className="mt-0.5 shrink-0 z-10 bg-black rounded-full">
                         {block.completed ? (
                           <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                         ) : (
@@ -346,19 +346,19 @@ export const Dashboard: React.FC = () => {
                         )}
                       </button>
 
-                      <div className="flex-1 space-y-1 bg-slate-950/40 p-4 rounded-xl border border-slate-800/60 group-hover:border-indigo-500/30 transition-colors">
+                      <div className="flex-1 space-y-1 bg-black/60 p-4 rounded-xl border border-zinc-800/60 group-hover:border-indigo-500/30 transition-colors">
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-xs font-mono font-semibold text-indigo-400 flex items-center gap-1.5">
                             <Clock className="w-3.5 h-3.5" />
                             {block.timeRange}
                           </span>
-                          <span className="text-[10px] text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/50 font-medium">
+                          <span className="text-[10px] text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800 font-medium">
                             {block.subjectName}
                           </span>
                         </div>
                         <p
-                          className={`text-sm font-medium text-slate-200 ${
-                            block.completed ? 'line-through text-slate-500' : ''
+                          className={`text-sm font-medium text-zinc-200 ${
+                            block.completed ? 'line-through text-zinc-500' : ''
                           }`}
                         >
                           {block.activity}
@@ -371,12 +371,12 @@ export const Dashboard: React.FC = () => {
 
               {/* 4. REASONING CARD */}
               <section className="space-y-4">
-                <div className="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-6 sm:p-8 backdrop-blur-xl space-y-3 shadow-md shadow-slate-950/40">
+                <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-6 sm:p-8 backdrop-blur-xl space-y-3 shadow-md shadow-black/50">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-400">
                     <HelpCircle className="w-4 h-4 text-indigo-400" />
                     <span>Why This Plan Today?</span>
                   </div>
-                  <p className="text-sm text-slate-300 leading-relaxed">
+                  <p className="text-sm text-zinc-300 leading-relaxed">
                     {plan.reasoning}
                   </p>
                 </div>
@@ -404,8 +404,8 @@ export const Dashboard: React.FC = () => {
 
       {/* GENERATE CONFIG MODAL */}
       {showConfigModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <Sliders className="w-5 h-5 text-indigo-400" />
@@ -413,7 +413,7 @@ export const Dashboard: React.FC = () => {
               </h3>
               <button
                 onClick={() => setShowConfigModal(false)}
-                className="text-slate-400 hover:text-white text-sm"
+                className="text-zinc-400 hover:text-white text-sm"
               >
                 ✕
               </button>
@@ -421,7 +421,7 @@ export const Dashboard: React.FC = () => {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-2">
+                <label className="block text-xs font-medium text-zinc-300 mb-2">
                   Available Study Time Today: <strong className="text-indigo-400">{availableMinutes} mins</strong> ({formatMinutes(availableMinutes)})
                 </label>
                 <input
@@ -436,7 +436,7 @@ export const Dashboard: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-2">
+                <label className="block text-xs font-medium text-zinc-300 mb-2">
                   Your Energy Level Today
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -448,7 +448,7 @@ export const Dashboard: React.FC = () => {
                       className={`py-2 text-xs font-semibold capitalize rounded-xl border transition-all ${
                         energyLevel === lvl
                           ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
-                          : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
+                          : 'bg-black text-zinc-400 border-zinc-800 hover:border-zinc-700'
                       }`}
                     >
                       <Zap className="w-3 h-3 inline mr-1" />
