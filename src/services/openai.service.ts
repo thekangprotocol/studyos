@@ -52,6 +52,51 @@ function parseNaturalDate(text: string, defaultDaysAhead: number = 1): string {
   return fallbackDate.toISOString();
 }
 
+/**
+ * Sanitizes task titles by stripping conversational filler words (e.g., "i have to study", "must do", "need to").
+ */
+function sanitizeTaskTitle(rawTitle: string, rawCourseName?: string): { title: string; courseName: string } {
+  let cleaned = rawTitle.trim();
+
+  // Strip conversational filler prefixes
+  cleaned = cleaned.replace(
+    /^(i\s+(have\s+to|need\s+to|want\s+to|gonna|must|should)\s+(study|read|do|finish|write|work\s+on)?|must\s+study|have\s+to\s+study|need\s+to\s+study|study)\s+/i,
+    ''
+  ).trim();
+
+  // Strip leading "study " if remaining
+  cleaned = cleaned.replace(/^study\s+/i, '').trim();
+
+  // Capitalize title
+  let finalTitle = cleaned
+    .split(' ')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+
+  if (!finalTitle || finalTitle.toLowerCase() === 'chemistry' || finalTitle.toLowerCase() === 'math' || finalTitle.toLowerCase() === 'biology' || finalTitle.toLowerCase() === 'physics' || finalTitle.toLowerCase() === 'calculus' || finalTitle.toLowerCase() === 'history') {
+    const course = rawCourseName || finalTitle || 'General Study';
+    return {
+      title: course,
+      courseName: course,
+    };
+  }
+
+  let course = rawCourseName;
+  if (!course || course === 'General Study') {
+    if (finalTitle.toLowerCase().includes('chem')) course = 'Chemistry';
+    else if (finalTitle.toLowerCase().includes('calc') || finalTitle.toLowerCase().includes('math')) course = 'Calculus';
+    else if (finalTitle.toLowerCase().includes('bio')) course = 'Biology';
+    else if (finalTitle.toLowerCase().includes('physic')) course = 'Physics';
+    else if (finalTitle.toLowerCase().includes('hist')) course = 'History';
+    else course = finalTitle.split(' ')[0];
+  }
+
+  return {
+    title: finalTitle,
+    courseName: course,
+  };
+}
+
 export interface AIActionItem {
   actionType: 'add_task' | 'add_exam' | 'complete_task' | 'record_memory';
   title?: string;
@@ -65,7 +110,7 @@ export interface AIActionItem {
 
 /**
  * True ChatGPT-Style AI Chief of Staff Service
- * Combines conversational intelligence with dynamic system action execution.
+ * Combines conversational intelligence with dynamic system action execution & title sanitization.
  */
 export const openAIService = {
   /**
@@ -93,8 +138,8 @@ YOU MUST RETURN A VALID JSON OBJECT WITH EXACTLY THIS SCHEMA:
   "actions": [
     {
       "actionType": "add_task" | "add_exam" | "complete_task" | "record_memory",
-      "title": "Clean Title",
-      "courseName": "Subject Name",
+      "title": "Clean concise title (e.g., 'Chemistry', 'Calculus Chapter 4', 'Biology Lab')",
+      "courseName": "Clean subject name (e.g., 'Chemistry', 'Calculus', 'Biology')",
       "estimatedMinutes": 45,
       "dueDate": "ISO Date String or relative description like tomorrow",
       "examDate": "ISO Date String or relative description like next Friday",
@@ -105,11 +150,10 @@ YOU MUST RETURN A VALID JSON OBJECT WITH EXACTLY THIS SCHEMA:
 }
 
 Action Rules:
-- If the user says they have a test/exam/quiz/midterm -> add an "add_exam" action with the subject and date.
-- If the user says "study X", "need to read Y", "do Z", "write essay", "practice math", or mentions any task -> add an "add_task" action with clean title and duration.
-- If the user says they finished or completed something -> add a "complete_task" action.
-- If the user shares a struggle, goal, or habit -> add a "record_memory" action.
-- If no specific action is needed, return "actions": [].
+- "title": MUST BE A CLEAN SHORT TITLE (e.g. "Chemistry", "Biology Chapter 4", "Physics Essay"). DO NOT INCLUDE FILLER WORDS LIKE "i have to study", "i need to", "must do".
+- If user says "i have to study chemistry" -> title is "Chemistry", courseName is "Chemistry".
+- If user says they have a test/exam/quiz/midterm -> add an "add_exam" action with the subject and date.
+- If user says they finished or completed something -> add a "complete_task" action.
 `;
 
     let aiReply = '';
@@ -213,16 +257,17 @@ Action Rules:
     const summaries: string[] = [];
 
     for (const act of actions) {
-      if (act.actionType === 'add_task' && act.title) {
+      if (act.actionType === 'add_task' && (act.title || act.courseName)) {
+        const { title, courseName } = sanitizeTaskTitle(act.title || rawMessage, act.courseName);
         const dueDate = parseNaturalDate(act.dueDate || rawMessage, 1);
         await dbService.addTask({
-          title: act.title,
-          courseName: act.courseName || 'General Study',
+          title,
+          courseName,
           dueDate,
           estimatedMinutes: act.estimatedMinutes || 45,
           priority: 'high',
         });
-        summaries.push(`Added task "${act.title}"`);
+        summaries.push(`Added task "${title}"`);
       } else if (act.actionType === 'add_exam' && (act.title || act.courseName)) {
         const examTitle = act.title || `${act.courseName || 'General'} Exam`;
         const examDate = parseNaturalDate(act.examDate || rawMessage, 4);
@@ -282,19 +327,12 @@ Action Rules:
     }
     // Study / Task Detection
     else {
-      let subject = 'General Study';
-      if (msg.includes('chem') || msg.includes('chemistry')) subject = 'Chemistry';
-      else if (msg.includes('calc') || msg.includes('math') || msg.includes('calculus')) subject = 'Calculus';
-      else if (msg.includes('bio') || msg.includes('biology')) subject = 'Biology';
-      else if (msg.includes('history')) subject = 'History';
-      else if (msg.includes('physics')) subject = 'Physics';
-
-      const title = userMessage.charAt(0).toUpperCase() + userMessage.slice(1);
+      const { title, courseName } = sanitizeTaskTitle(userMessage);
       const dueDate = parseNaturalDate(userMessage, 1);
 
       await dbService.addTask({
         title,
-        courseName: subject,
+        courseName,
         dueDate,
         estimatedMinutes: 45,
         priority: 'high',
