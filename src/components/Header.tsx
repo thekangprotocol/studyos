@@ -1,18 +1,23 @@
 import React from 'react';
 import { Container } from './Container';
 import { formatTodayHeader } from '../utils/date';
-import { Compass, LogOut, User } from 'lucide-react';
+import { Compass, LogOut, User, LayoutDashboard, MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+
+interface HeaderProps {
+  activeTab?: 'dashboard' | 'chat';
+  setActiveTab?: (tab: 'dashboard' | 'chat') => void;
+}
 
 /**
  * Reusable Header Component
- * Displays the StudyOS pitch black brand title, today's date, logged in user info, and sign out button.
+ * Displays StudyOS pitch black brand title, navigation tabs (Today's Mission vs Chief of Staff Chat), user info, and sign out.
  */
-export const Header: React.FC = () => {
+export const Header: React.FC<HeaderProps> = ({ activeTab = 'dashboard', setActiveTab }) => {
   const { user, signOut } = useAuth();
 
   return (
-    <header className="border-b border-zinc-900 bg-black/80 backdrop-blur-xl sticky top-0 z-40 py-4">
+    <header className="border-b border-zinc-900 bg-black/80 backdrop-blur-xl sticky top-0 z-40 py-3">
       <Container>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -23,15 +28,42 @@ export const Header: React.FC = () => {
               <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
                 Study<span className="text-indigo-400">OS</span>
                 <span className="text-[10px] bg-indigo-950 text-indigo-300 font-semibold px-2 py-0.5 rounded-full border border-indigo-800/40">
-                  MVP
+                  Chief of Staff
                 </span>
               </h1>
-              <p className="text-[11px] text-zinc-400">AI Daily Priority Assistant</p>
             </div>
           </div>
 
+          {/* Center Navigation Tabs */}
+          {user && setActiveTab && (
+            <div className="flex bg-zinc-900/80 p-1 rounded-xl border border-zinc-800">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === 'dashboard'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                <span>Today's Mission</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('chat')}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === 'chat'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>Chief of Staff Chat</span>
+              </button>
+            </div>
+          )}
+
           <div className="flex items-center gap-4">
-            <div className="hidden sm:block text-right">
+            <div className="hidden lg:block text-right">
               <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400 bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-800">
                 {formatTodayHeader()}
               </span>
@@ -39,9 +71,9 @@ export const Header: React.FC = () => {
 
             {user && (
               <div className="flex items-center gap-3 pl-3 border-l border-zinc-900">
-                <div className="flex items-center gap-2 text-xs text-zinc-300 bg-zinc-900/80 px-3 py-1.5 rounded-lg border border-zinc-800">
+                <div className="hidden sm:flex items-center gap-2 text-xs text-zinc-300 bg-zinc-900/80 px-3 py-1.5 rounded-lg border border-zinc-800">
                   <User className="w-3.5 h-3.5 text-indigo-400" />
-                  <span className="max-w-[140px] truncate font-medium">{user.email}</span>
+                  <span className="max-w-[120px] truncate font-medium">{user.email}</span>
                 </div>
                 <button
                   onClick={() => signOut()}
