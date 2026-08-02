@@ -28,7 +28,6 @@ interface FormErrors {
 }
 
 export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCancel }) => {
-  // Form input states
   const [courseTitle, setCourseTitle] = useState('');
   const [courseCode, setCourseCode] = useState('');
   const [assignmentTitle, setAssignmentTitle] = useState('');
@@ -38,12 +37,10 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
   const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('high');
   const [availableStudyMinutesToday, setAvailableStudyMinutesToday] = useState('180');
 
-  // UI status states
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Field validation function
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
@@ -57,13 +54,6 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
 
     if (!dueDate) {
       newErrors.dueDate = 'Please select a deadline date and time.';
-    } else {
-      const selectedDate = new Date(dueDate);
-      if (isNaN(selectedDate.getTime())) {
-        newErrors.dueDate = 'Please provide a valid date.';
-      } else if (selectedDate < new Date(Date.now() - 5 * 60 * 1000)) {
-        newErrors.dueDate = 'Deadline should be a future date and time.';
-      }
     }
 
     const durationNum = Number(estimatedMinutes);
@@ -121,72 +111,65 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
   };
 
   return (
-    <div className="bg-zinc-900/90 border border-zinc-800 rounded-3xl p-6 sm:p-10 backdrop-blur-xl shadow-2xl space-y-6 max-w-2xl mx-auto">
-      <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-6 max-w-2xl mx-auto text-black dark:text-white">
+      <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
+          <div className="p-2 bg-black text-white dark:bg-white dark:text-black rounded-xl shadow-sm">
             <PlusCircle className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-white tracking-tight">Add New Study Task</h3>
-            <p className="text-xs text-zinc-400">Save to your Supabase database & recalculate your plan</p>
+            <h3 className="text-xl font-bold tracking-tight font-heading">Add New Study Task</h3>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Save to your Supabase database & recalculate your plan</p>
           </div>
         </div>
 
         {onCancel && (
           <button
             onClick={onCancel}
-            className="text-xs text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg border border-zinc-800 hover:border-zinc-700 transition-colors"
+            className="text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 transition-colors"
           >
             Cancel
           </button>
         )}
       </div>
 
-      {/* General Error Banner */}
       {errors.general && (
-        <div className="p-4 bg-red-950/60 border border-red-800/60 rounded-2xl text-red-300 text-xs flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 shrink-0 text-red-400" />
+        <div className="p-4 bg-red-100 dark:bg-red-950/60 border border-red-200 dark:border-red-800/60 rounded-2xl text-red-800 dark:text-red-300 text-xs flex items-center gap-3 font-semibold">
+          <AlertCircle className="w-5 h-5 shrink-0" />
           <span>{errors.general}</span>
         </div>
       )}
 
-      {/* Success Notification */}
       {successMsg && (
-        <div className="p-4 bg-emerald-950/60 border border-emerald-800/60 rounded-2xl text-emerald-300 text-xs flex items-center gap-3">
-          <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
+        <div className="p-4 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-2xl text-black dark:text-white text-xs flex items-center gap-3 font-bold">
+          <CheckCircle2 className="w-5 h-5 shrink-0 text-black dark:text-white" />
           <span>{successMsg}</span>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* 1. COURSE FIELD */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="sm:col-span-2 space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
-              Course Name <span className="text-indigo-400">*</span>
+            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+              Course Name *
             </label>
             <div className="relative">
-              <BookOpen className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+              <BookOpen className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
               <input
                 type="text"
                 value={courseTitle}
                 onChange={(e) => setCourseTitle(e.target.value)}
                 placeholder="e.g. Calculus II or Computer Science"
-                className={`w-full pl-10 pr-4 py-3 bg-black border rounded-xl text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none transition-all ${
-                  errors.courseTitle
-                    ? 'border-red-500/80 focus:border-red-500'
-                    : 'border-zinc-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
-                }`}
+                className="w-full pl-10 pr-4 py-3 bg-zinc-50 dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded-xl text-sm text-black dark:text-white placeholder-zinc-400 focus:outline-none focus:border-black dark:focus:border-white transition-all font-medium"
               />
             </div>
             {errors.courseTitle && (
-              <p className="text-xs text-red-400 mt-1">{errors.courseTitle}</p>
+              <p className="text-xs text-red-500 mt-1 font-semibold">{errors.courseTitle}</p>
             )}
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
+            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
               Course Code
             </label>
             <input
@@ -194,66 +177,55 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
               value={courseCode}
               onChange={(e) => setCourseCode(e.target.value)}
               placeholder="MATH 202"
-              className="w-full px-4 py-3 bg-black border border-zinc-800 rounded-xl text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+              className="w-full px-4 py-3 bg-zinc-50 dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded-xl text-sm text-black dark:text-white placeholder-zinc-400 focus:outline-none focus:border-black dark:focus:border-white transition-all font-medium"
             />
           </div>
         </div>
 
-        {/* 2. ASSIGNMENT FIELD */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
-            Assignment / Task Title <span className="text-indigo-400">*</span>
+          <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+            Assignment / Task Title *
           </label>
           <div className="relative">
-            <FileText className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+            <FileText className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
             <input
               type="text"
               value={assignmentTitle}
               onChange={(e) => setAssignmentTitle(e.target.value)}
               placeholder="e.g. Problem Set 4: Integration by Parts"
-              className={`w-full pl-10 pr-4 py-3 bg-black border rounded-xl text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none transition-all ${
-                errors.assignmentTitle
-                  ? 'border-red-500/80 focus:border-red-500'
-                  : 'border-zinc-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
-              }`}
+              className="w-full pl-10 pr-4 py-3 bg-zinc-50 dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded-xl text-sm text-black dark:text-white placeholder-zinc-400 focus:outline-none focus:border-black dark:focus:border-white transition-all font-medium"
             />
           </div>
           {errors.assignmentTitle && (
-            <p className="text-xs text-red-400 mt-1">{errors.assignmentTitle}</p>
+            <p className="text-xs text-red-500 mt-1 font-semibold">{errors.assignmentTitle}</p>
           )}
         </div>
 
-        {/* 3. DEADLINE FIELD */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
-              Deadline Date & Time <span className="text-indigo-400">*</span>
+            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+              Deadline Date & Time *
             </label>
             <div className="relative">
-              <Calendar className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+              <Calendar className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
               <input
                 type="datetime-local"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className={`w-full pl-10 pr-4 py-3 bg-black border rounded-xl text-sm text-zinc-100 focus:outline-none transition-all ${
-                  errors.dueDate
-                    ? 'border-red-500/80 focus:border-red-500'
-                    : 'border-zinc-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
-                }`}
+                className="w-full pl-10 pr-4 py-3 bg-zinc-50 dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded-xl text-sm text-black dark:text-white focus:outline-none focus:border-black dark:focus:border-white transition-all font-medium"
               />
             </div>
             {errors.dueDate && (
-              <p className="text-xs text-red-400 mt-1">{errors.dueDate}</p>
+              <p className="text-xs text-red-500 mt-1 font-semibold">{errors.dueDate}</p>
             )}
           </div>
 
-          {/* 4. ESTIMATED DURATION FIELD */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
-              Estimated Duration (Minutes) <span className="text-indigo-400">*</span>
+            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+              Estimated Duration (Minutes) *
             </label>
             <div className="relative">
-              <Clock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+              <Clock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
               <input
                 type="number"
                 min="5"
@@ -262,22 +234,17 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
                 value={estimatedMinutes}
                 onChange={(e) => setEstimatedMinutes(e.target.value)}
                 placeholder="45"
-                className={`w-full pl-10 pr-4 py-3 bg-black border rounded-xl text-sm text-zinc-100 focus:outline-none transition-all ${
-                  errors.estimatedMinutes
-                    ? 'border-red-500/80 focus:border-red-500'
-                    : 'border-zinc-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
-                }`}
+                className="w-full pl-10 pr-4 py-3 bg-zinc-50 dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded-xl text-sm text-black dark:text-white focus:outline-none focus:border-black dark:focus:border-white transition-all font-medium"
               />
             </div>
             {errors.estimatedMinutes && (
-              <p className="text-xs text-red-400 mt-1">{errors.estimatedMinutes}</p>
+              <p className="text-xs text-red-500 mt-1 font-semibold">{errors.estimatedMinutes}</p>
             )}
           </div>
         </div>
 
-        {/* 5. IMPORTANCE / PRIORITY SELECTOR */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
+          <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
             Importance / Priority Level
           </label>
           <div className="grid grid-cols-4 gap-2">
@@ -286,10 +253,10 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
                 key={lvl}
                 type="button"
                 onClick={() => setPriority(lvl)}
-                className={`py-2.5 text-xs font-semibold capitalize rounded-xl border transition-all ${
+                className={`py-2.5 text-xs font-extrabold capitalize rounded-xl border transition-all ${
                   priority === lvl
-                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20'
-                    : 'bg-black text-zinc-400 border-zinc-800 hover:border-zinc-700'
+                    ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-md'
+                    : 'bg-zinc-50 text-zinc-600 border-zinc-200 dark:bg-black dark:text-zinc-400 dark:border-zinc-800'
                 }`}
               >
                 {lvl}
@@ -298,13 +265,12 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
           </div>
         </div>
 
-        {/* 6. AVAILABLE STUDY TIME TODAY */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
-            Available Study Time Today (Minutes) <span className="text-indigo-400">*</span>
+          <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+            Available Study Time Today (Minutes) *
           </label>
           <div className="relative">
-            <Sliders className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+            <Sliders className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
             <input
               type="number"
               min="15"
@@ -313,26 +279,21 @@ export const TaskInputForm: React.FC<TaskInputFormProps> = ({ onTaskSaved, onCan
               value={availableStudyMinutesToday}
               onChange={(e) => setAvailableStudyMinutesToday(e.target.value)}
               placeholder="180 (3 hours)"
-              className={`w-full pl-10 pr-4 py-3 bg-black border rounded-xl text-sm text-zinc-100 focus:outline-none transition-all ${
-                errors.availableStudyMinutesToday
-                  ? 'border-red-500/80 focus:border-red-500'
-                  : 'border-zinc-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
-              }`}
+              className="w-full pl-10 pr-4 py-3 bg-zinc-50 dark:bg-black border border-zinc-300 dark:border-zinc-800 rounded-xl text-sm text-black dark:text-white focus:outline-none focus:border-black dark:focus:border-white transition-all font-medium"
             />
           </div>
-          <span className="text-[11px] text-zinc-400">
+          <span className="text-[11px] text-zinc-500 font-semibold">
             Current setting: {Math.floor(Number(availableStudyMinutesToday) / 60)}h {Number(availableStudyMinutesToday) % 60}m
           </span>
           {errors.availableStudyMinutesToday && (
-            <p className="text-xs text-red-400 mt-1">{errors.availableStudyMinutesToday}</p>
+            <p className="text-xs text-red-500 mt-1 font-semibold">{errors.availableStudyMinutesToday}</p>
           )}
         </div>
 
-        {/* SUBMIT BUTTON */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-semibold text-sm rounded-xl transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+          className="w-full py-4 bg-black text-white dark:bg-white dark:text-black font-extrabold text-sm rounded-xl transition-all shadow-xl flex items-center justify-center gap-2 disabled:opacity-50 mt-4"
         >
           {loading ? (
             <>

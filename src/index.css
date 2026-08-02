@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
     --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -8,9 +10,7 @@
 
   body {
     font-family: var(--font-sans);
-    background-color: #000000;
-    color: #ffffff;
-    transition: background-color 0.25s ease, color 0.25s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -18,8 +18,13 @@
   }
 }
 
-/* Light mode overrides when html has class "light" */
-html.light body {
+/* Ensure body background and text switch cleanly */
+html.dark body {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+html:not(.dark) body, html.light body {
   background-color: #ffffff !important;
   color: #09090b !important;
 }
@@ -39,8 +44,8 @@ html.dark ::-webkit-scrollbar-thumb {
   border-radius: 9999px;
 }
 
-html.light ::-webkit-scrollbar-thumb {
-  background: #e4e4e7;
+html:not(.dark) ::-webkit-scrollbar-thumb, html.light ::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
   border-radius: 9999px;
 }
 
@@ -50,7 +55,7 @@ html.dark ::selection {
   color: #000000;
 }
 
-html.light ::selection {
+html:not(.dark) ::selection, html.light ::selection {
   background-color: #000000;
   color: #ffffff;
 }
