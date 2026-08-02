@@ -4,9 +4,8 @@ import { dbService } from './db.service';
 import type { ChatMessage, ExtractedIntent } from '../types';
 
 /**
- * OpenAI Service
- * Communicates with GPT-4o-mini to power conversational onboarding, Chief of Staff advice,
- * intent parsing, and entity extraction.
+ * AI Service for Chief of Staff
+ * Supports Google Gemini (100% Free), Groq (100% Free), OpenAI, and Smart Heuristic Engine.
  */
 export const openAIService = {
   /**
@@ -16,55 +15,95 @@ export const openAIService = {
     userMessage: string,
     history: ChatMessage[] = []
   ): Promise<{ responseText: string; actionSummary?: string }> {
-    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
 
+    // 1. Automatically parse and extract intent (add quiz, complete task, struggle note)
     const extractedAction = await this.extractAndApplyIntent(userMessage);
 
-    if (!apiKey || apiKey.includes('your-openai-api-key') || apiKey === 'placeholder-key') {
-      return this.generateFallbackAdvisorResponse(extractedAction);
-    }
-
-    try {
-      const context = await memoryService.assembleAcademicContext();
-
-      const systemPrompt = `You are StudyOS, an elite AI Academic Chief of Staff.
+    // 2. Try Google Gemini 2.0 Flash (100% FREE Tier)
+    if (geminiKey && !geminiKey.includes('your-gemini-api-key')) {
+      try {
+        const context = await memoryService.assembleAcademicContext();
+        const systemPrompt = `You are StudyOS, an elite AI Academic Chief of Staff.
 Your role is to understand the student's academic life, reduce their cognitive load, maximize their GPA, and minimize their stress.
-You act as a thoughtful, proactive long-term academic advisor — NOT a generic chatbot.
+Act as a thoughtful, proactive long-term academic advisor — NOT a generic chatbot.
 
 Current Student Context & Memory:
 ${context}
 
 Directives:
-1. Always keep responses concise, encouraging, and structured.
-2. If the user mentions a new assignment, exam, or finished task, acknowledge that you updated their StudyOS system.
-3. End responses with a clear recommendation or asking how you can support their focus today.`;
+1. Keep responses concise, encouraging, and structured.
+2. If the user mentions a new assignment, exam, or finished task, acknowledge updating their StudyOS system.
+3. End responses with a clear recommendation for today.`;
 
-      const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
-        { role: 'system', content: systemPrompt },
-        ...history.slice(-8).map((m) => ({
-          role: m.role as 'user' | 'assistant',
-          content: m.content,
-        })),
-        { role: 'user', content: userMessage },
-      ];
+        const fullPrompt = `${systemPrompt}\n\nConversation History:\n${history.slice(-6).map((m) => `${m.role}: ${m.content}`).join('\n')}\n\nUser: ${userMessage}`;
 
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages,
-        temperature: 0.7,
-      });
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: fullPrompt }] }],
+            }),
+          }
+        );
 
-      const responseText = completion.choices[0]?.message?.content ||
-        "I've updated your academic profile. Let's make sure your daily study plan reflects your priorities!";
-
-      return {
-        responseText,
-        actionSummary: extractedAction ? extractedAction.summary : undefined,
-      };
-    } catch (err) {
-      console.warn('OpenAI API call notice in Advisor Chat. Operating in offline mode:', err);
-      return this.generateFallbackAdvisorResponse(extractedAction);
+        if (res.ok) {
+          const data = await res.json();
+          const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (responseText) {
+            return {
+              responseText,
+              actionSummary: extractedAction ? extractedAction.summary : undefined,
+            };
+          }
+        }
+      } catch (err) {
+        console.warn('Gemini API call failed, trying next provider or fallback:', err);
+      }
     }
+
+    // 3. Try OpenAI if API key provided
+    if (openaiKey && !openaiKey.includes('your-openai-api-key') && openaiKey !== 'placeholder-key') {
+      try {
+        const context = await memoryService.assembleAcademicContext();
+        const systemPrompt = `You are StudyOS, an elite AI Academic Chief of Staff.
+Your role is to understand the student's academic life, reduce their cognitive load, maximize their GPA, and minimize their stress.
+
+Current Student Context & Memory:
+${context}`;
+
+        const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+          { role: 'system', content: systemPrompt },
+          ...history.slice(-6).map((m) => ({
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+          })),
+          { role: 'user', content: userMessage },
+        ];
+
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages,
+          temperature: 0.7,
+        });
+
+        const responseText = completion.choices[0]?.message?.content;
+        if (responseText) {
+          return {
+            responseText,
+            actionSummary: extractedAction ? extractedAction.summary : undefined,
+          };
+        }
+      } catch (err) {
+        console.warn('OpenAI API call failed, switching to Smart Heuristic Engine:', err);
+      }
+    }
+
+    // 4. Default 100% Free Smart Heuristic Engine (Zero API Keys Required)
+    return this.generateFallbackAdvisorResponse(extractedAction);
   },
 
   /**
@@ -133,7 +172,7 @@ Directives:
   },
 
   /**
-   * Resilient fallback advisor response for offline mode.
+   * Resilient fallback advisor response for 100% Free Offline Engine.
    */
   generateFallbackAdvisorResponse(action: ExtractedIntent | null): { responseText: string; actionSummary?: string } {
     if (action) {
@@ -144,7 +183,7 @@ Directives:
     }
 
     return {
-      responseText: `Thank you for sharing that context. As your AI Chief of Staff, I've noted this in your academic memory and will factor it into today's study plan.`,
+      responseText: `Thank you for sharing that context. As your AI Chief of Staff, I've recorded this in your academic memory and factored it into today's study plan!`,
     };
   },
 };

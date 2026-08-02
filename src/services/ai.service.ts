@@ -41,113 +41,151 @@ Output Format:
   },
 
   /**
-   * Generates a tailored study recommendation with full edge-case protection & API timeouts.
+   * Generates a tailored study recommendation with full edge-case protection & multi-provider AI support (Gemini, OpenAI, Fallback).
    */
   async generateDailyPlan(
     input: DailyPromptInput,
     unfinishedTasks: StudyTask[] = []
   ): Promise<StudyPlanRecommendation> {
-    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
 
-    // Edge Case: No API key or placeholder key
-    if (!apiKey || apiKey.includes('your-openai-api-key') || apiKey === 'placeholder-key') {
-      console.warn('OpenAI API key missing. Operating in resilient local rules engine mode.');
-      return this.generateFallbackPlan(input, unfinishedTasks);
-    }
-
-    // Edge Case 1: No assignments
     if (unfinishedTasks.length === 0) {
       return this.generateZeroTasksPlan(input);
     }
 
-    // Edge Case 2: Too many assignments (Cap list to top 15 nearest deadlines for token efficiency)
     const sanitizedTasks = unfinishedTasks.slice(0, 15);
-
-    // Edge Case 3: Zero or very low study time
     const sanitizedMinutes = Math.max(15, input.availableMinutes || 60);
 
-    try {
-      const userContent = {
-        availableMinutes: sanitizedMinutes,
-        energyLevel: input.energyLevel || 'medium',
-        upcomingExams: input.upcomingExams || [],
-        unfinishedTasksCount: sanitizedTasks.length,
-        unfinishedTasksList: sanitizedTasks.map((t) => {
-          const isOverdue = t.dueDate ? new Date(t.dueDate) < new Date() : false;
-          return {
-            subject: t.subjectName,
-            task: `${isOverdue ? '[OVERDUE] ' : ''}${t.title}`,
-            dueDate: t.dueDate,
-            estimatedMinutes: t.estimatedMinutes,
-            priority: isOverdue ? 'urgent' : t.priority,
-          };
-        }),
-      };
+    const userContent = {
+      availableMinutes: sanitizedMinutes,
+      energyLevel: input.energyLevel || 'medium',
+      upcomingExams: input.upcomingExams || [],
+      unfinishedTasksCount: sanitizedTasks.length,
+      unfinishedTasksList: sanitizedTasks.map((t) => {
+        const isOverdue = t.dueDate ? new Date(t.dueDate) < new Date() : false;
+        return {
+          subject: t.subjectName,
+          task: `${isOverdue ? '[OVERDUE] ' : ''}${t.title}`,
+          dueDate: t.dueDate,
+          estimatedMinutes: t.estimatedMinutes,
+          priority: isOverdue ? 'urgent' : t.priority,
+        };
+      }),
+    };
 
-      // Edge Case 5: API Timeout Protection (8-second max timeout via AbortController)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+    // Provider 1: Try 100% FREE Google Gemini 2.0 Flash
+    if (geminiKey && !geminiKey.includes('your-gemini-api-key')) {
+      try {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    {
+                      text: `${this.getSystemPrompt()}\n\nStudent Context:\n${JSON.stringify(userContent, null, 2)}`,
+                    },
+                  ],
+                },
+              ],
+              generationConfig: { responseMimeType: 'application/json' },
+            }),
+          }
+        );
 
-      const response = await openai.chat.completions.create(
-        {
-          model: 'gpt-4o-mini',
-          response_format: { type: 'json_object' },
-          messages: [
-            { role: 'system', content: this.getSystemPrompt() },
-            {
-              role: 'user',
-              content: `Student Context:\n${JSON.stringify(userContent, null, 2)}`,
-            },
-          ],
-          temperature: 0.7,
-        },
-        { signal: controller.signal }
-      );
-
-      clearTimeout(timeoutId);
-
-      const content = response.choices[0]?.message?.content;
-      if (!content) {
-        throw new Error('OpenAI returned an empty response.');
+        if (res.ok) {
+          const data = await res.json();
+          const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (content) {
+            return this.parseResponseToRecommendation(content, sanitizedTasks, sanitizedMinutes);
+          }
+        }
+      } catch (err) {
+        console.warn('Gemini API call notice. Trying OpenAI or fallback:', err);
       }
-
-      const parsed = JSON.parse(content);
-      const prioritiesList = parsed.priorities || [];
-      const scheduleList = parsed.schedule || [];
-
-      const focusSubject = sanitizedTasks[0]?.subjectName || 'General Study';
-      const reasoning = prioritiesList[0]?.reason ||
-        `Selected top priorities to maximize grade impact within your ${sanitizedMinutes} available minutes.`;
-
-      return {
-        id: `plan-${Date.now()}`,
-        date: new Date().toISOString().split('T')[0],
-        focusSubject,
-        missionTitle: prioritiesList[0]?.task ? `Focus: ${prioritiesList[0].task}` : `Master ${focusSubject} & High-Value Priorities`,
-        reasoning,
-        recommendedTasks: prioritiesList.slice(0, 3).map((p: any, idx: number) => ({
-          id: `p-${idx + 1}`,
-          subjectId: `sub-${idx}`,
-          subjectName: focusSubject,
-          title: p.task,
-          estimatedMinutes: Math.min(60, Math.floor(sanitizedMinutes / 3)),
-          priority: p.priority?.toLowerCase() === 'high' ? 'high' : 'medium',
-          completed: false,
-        })),
-        timeline: scheduleList.map((s: any, idx: number) => ({
-          id: `tb-${idx + 1}`,
-          timeRange: `${s.start || ''} - ${s.end || ''}`.trim() || `Session ${idx + 1}`,
-          activity: s.task,
-          subjectName: focusSubject,
-          completed: false,
-        })),
-        totalEstimatedMinutes: sanitizedMinutes,
-      };
-    } catch (err: unknown) {
-      console.warn('OpenAI API call timed out or failed. Falling back to local rules engine:', err);
-      // Edge Case 5 & 6: Timeout / Network failure fallback
-      return this.generateFallbackPlan(input, unfinishedTasks);
     }
+
+    // Provider 2: Try OpenAI if API Key provided
+    if (openaiKey && !openaiKey.includes('your-openai-api-key') && openaiKey !== 'placeholder-key') {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+        const response = await openai.chat.completions.create(
+          {
+            model: 'gpt-4o-mini',
+            response_format: { type: 'json_object' },
+            messages: [
+              { role: 'system', content: this.getSystemPrompt() },
+              {
+                role: 'user',
+                content: `Student Context:\n${JSON.stringify(userContent, null, 2)}`,
+              },
+            ],
+            temperature: 0.7,
+          },
+          { signal: controller.signal }
+        );
+
+        clearTimeout(timeoutId);
+
+        const content = response.choices[0]?.message?.content;
+        if (content) {
+          return this.parseResponseToRecommendation(content, sanitizedTasks, sanitizedMinutes);
+        }
+      } catch (err: unknown) {
+        console.warn('OpenAI API call timed out or failed. Falling back to local rules engine:', err);
+      }
+    }
+
+    // Provider 3: 100% Free Smart Local Heuristics Engine (Zero API Keys Required)
+    return this.generateFallbackPlan(input, unfinishedTasks);
+  },
+
+  /**
+   * Helper to parse AI JSON response into StudyPlanRecommendation structure.
+   */
+  parseResponseToRecommendation(
+    content: string,
+    sanitizedTasks: StudyTask[],
+    sanitizedMinutes: number
+  ): StudyPlanRecommendation {
+    const parsed = JSON.parse(content);
+    const prioritiesList = parsed.priorities || [];
+    const scheduleList = parsed.schedule || [];
+
+    const focusSubject = sanitizedTasks[0]?.subjectName || 'General Study';
+    const reasoning = prioritiesList[0]?.reason ||
+      `Selected top priorities to maximize grade impact within your ${sanitizedMinutes} available minutes.`;
+
+    return {
+      id: `plan-${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      focusSubject,
+      missionTitle: prioritiesList[0]?.task ? `Focus: ${prioritiesList[0].task}` : `Master ${focusSubject} & High-Value Priorities`,
+      reasoning,
+      recommendedTasks: prioritiesList.slice(0, 3).map((p: any, idx: number) => ({
+        id: `p-${idx + 1}`,
+        subjectId: `sub-${idx}`,
+        subjectName: focusSubject,
+        title: p.task,
+        estimatedMinutes: Math.min(60, Math.floor(sanitizedMinutes / 3)),
+        priority: p.priority?.toLowerCase() === 'high' ? 'high' : 'medium',
+        completed: false,
+      })),
+      timeline: scheduleList.map((s: any, idx: number) => ({
+        id: `tb-${idx + 1}`,
+        timeRange: `${s.start || ''} - ${s.end || ''}`.trim() || `Session ${idx + 1}`,
+        activity: s.task,
+        subjectName: focusSubject,
+        completed: false,
+      })),
+      totalEstimatedMinutes: sanitizedMinutes,
+    };
   },
 
   /**
