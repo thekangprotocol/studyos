@@ -5,6 +5,57 @@ import { scheduleService } from './schedule.service';
 import type { ChatMessage, ExtractedIntent } from '../types';
 
 /**
+ * Helper to parse relative or explicit dates from natural language text.
+ */
+function parseNaturalDate(text: string, defaultDaysAhead: number = 1): string {
+  const lower = text.toLowerCase();
+  const now = new Date();
+
+  if (lower.includes('today')) {
+    return now.toISOString();
+  }
+  if (lower.includes('tomorrow')) {
+    const d = new Date(now);
+    d.setDate(d.getDate() + 1);
+    return d.toISOString();
+  }
+  if (lower.includes('day after tomorrow')) {
+    const d = new Date(now);
+    d.setDate(d.getDate() + 2);
+    return d.toISOString();
+  }
+
+  // Parse "in N days"
+  const inDaysMatch = lower.match(/in\s+(\d+)\s+days?/);
+  if (inDaysMatch) {
+    const days = parseInt(inDaysMatch[1], 10);
+    const d = new Date(now);
+    d.setDate(d.getDate() + days);
+    return d.toISOString();
+  }
+
+  // Parse days of the week
+  const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  for (let i = 0; i < daysOfWeek.length; i++) {
+    const dayName = daysOfWeek[i];
+    if (lower.includes(dayName)) {
+      const targetDay = i;
+      const currentDay = now.getDay();
+      let diff = targetDay - currentDay;
+      if (diff <= 0) diff += 7; // Target upcoming occurrence of this weekday
+      const d = new Date(now);
+      d.setDate(d.getDate() + diff);
+      return d.toISOString();
+    }
+  }
+
+  // Default fallback
+  const fallbackDate = new Date(now);
+  fallbackDate.setDate(fallbackDate.getDate() + defaultDaysAhead);
+  return fallbackDate.toISOString();
+}
+
+/**
  * AI Service for Chief of Staff
  * Supports Google Gemini (100% Free), Groq (100% Free), OpenAI, and Smart Heuristic Engine.
  */
@@ -47,7 +98,7 @@ ${context}
 Directives:
 1. Keep responses concise, encouraging, and structured.
 2. Acknowledge that you have recorded their update into their StudyOS system and updated today's study plan.
-3. If the user said "study [subject/topic]", explicitly confirm that "Study [topic]" has been added to their backlog and scheduled for today.
+3. Confirm specifically what task or exam was extracted and scheduled for them.
 4. End responses with a clear recommendation for today.`;
 
         const fullPrompt = `${systemPrompt}\n\nConversation History:\n${history.slice(-6).map((m) => `${m.role}: ${m.content}`).join('\n')}\n\nUser: ${userMessage}`;
@@ -121,98 +172,44 @@ ${context}`;
 
   /**
    * Universal intent & entity parser.
-   * Extracts "study _____" commands, exams, completed tasks, new tasks, or general context notes, and saves to Supabase.
+   * Extracts exams, quizzes, completed tasks, general tasks ("must read", "have a test", "do this"), and saves to Supabase with ACCURATE DATES.
    */
   async extractAndApplyIntent(userMessage: string): Promise<ExtractedIntent | null> {
     const msg = userMessage.toLowerCase().trim();
 
-    // Intent 0: "study _____" Direct Command Action Trigger
-    if (msg.includes('study')) {
-      let rawTopic = msg;
-      // Strip common prefixes: "i want to study", "i need to study", "please study", "study"
-      rawTopic = rawTopic
-        .replace(/^(i\s+want\s+to\s+study|i\s+need\s+to\s+study|can\s+we\s+study|let's\s+study|please\s+study|study)\s+/i, '')
-        .replace(/^study\s+/i, '')
-        .trim();
-
-      // Extract duration if mentioned (e.g. "for 60 mins", "for 1 hour", "30 minutes")
-      let minutes = 45;
-      const hourMatch = rawTopic.match(/(\d+)\s*(hour|hr|hrs)/i);
-      const minMatch = rawTopic.match(/(\d+)\s*(min|mins|minute|minutes|m)/i);
-
-      if (hourMatch) {
-        minutes = parseInt(hourMatch[1], 10) * 60;
-      } else if (minMatch) {
-        minutes = parseInt(minMatch[1], 10);
-      }
-
-      // Clean topic text by removing duration phrases
-      let cleanTopic = rawTopic
-        .replace(/for\s+\d+\s*(hour|hr|hrs|min|mins|minute|minutes|m)/gi, '')
-        .replace(/\d+\s*(hour|hr|hrs|min|mins|minute|minutes|m)/gi, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-
-      if (!cleanTopic || cleanTopic === 'study') {
-        cleanTopic = 'General Topic';
-      }
-
-      // Capitalize first letter of each word in subject/topic
-      const capitalizedTopic = cleanTopic
-        .split(' ')
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' ');
-
-      const taskTitle = capitalizedTopic.toLowerCase().startsWith('study')
-        ? capitalizedTopic
-        : `Study ${capitalizedTopic}`;
-
-      // Insert into Supabase tasks table
-      await dbService.addTask({
-        title: taskTitle,
-        courseName: capitalizedTopic,
-        estimatedMinutes: minutes,
-        priority: 'high',
-      });
-
-      // Record in long-term academic memory
-      await memoryService.recordMemory('goal', `User requested study session: "${taskTitle}" (${minutes} mins)`);
-
-      return {
-        intentType: 'add_task',
-        summary: `Added "${taskTitle}" (${minutes}m) to your backlog & scheduled in Today's Study Plan.`,
-        entities: { subjectName: capitalizedTopic, taskTitle, estimatedMinutes: minutes },
-      };
-    }
-
-    // Intent 1: Exam / Quiz / Test
+    // 1. EXAM / TEST / QUIZ / MIDTERM INTENT
     if (msg.includes('quiz') || msg.includes('exam') || msg.includes('test') || msg.includes('midterm')) {
       let subject = 'General Subject';
       if (msg.includes('chem') || msg.includes('chemistry')) subject = 'Chemistry';
-      else if (msg.includes('calc') || msg.includes('math')) subject = 'Calculus';
+      else if (msg.includes('calc') || msg.includes('math') || msg.includes('calculus')) subject = 'Calculus';
       else if (msg.includes('bio') || msg.includes('biology')) subject = 'Biology';
       else if (msg.includes('history')) subject = 'History';
       else if (msg.includes('physics')) subject = 'Physics';
       else if (msg.includes('english') || msg.includes('lit')) subject = 'English';
 
-      const targetDate = new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString();
+      // Accurately parse target date from text
+      const targetDate = parseNaturalDate(userMessage, 4);
+
+      const examTitle = userMessage.length > 40
+        ? `${subject} Test`
+        : userMessage.charAt(0).toUpperCase() + userMessage.slice(1);
 
       await dbService.addExam({
-        title: `${subject} Quiz/Exam`,
+        title: examTitle,
         courseName: subject,
         examDate: targetDate,
       });
 
-      await memoryService.recordMemory('goal', `Upcoming ${subject} exam noted: "${userMessage}"`);
+      await memoryService.recordMemory('goal', `Upcoming exam noted for ${new Date(targetDate).toLocaleDateString()}: "${userMessage}"`);
 
       return {
         intentType: 'add_exam',
-        summary: `Added ${subject} exam to database & updated study priorities.`,
-        entities: { subjectName: subject, examTitle: `${subject} Quiz` },
+        summary: `Added ${examTitle} (Date: ${new Date(targetDate).toLocaleDateString()}) to database & updated study priorities.`,
+        entities: { subjectName: subject, examTitle, examDate: targetDate },
       };
     }
 
-    // Intent 2: Finished / Completed Task
+    // 2. COMPLETED / FINISHED TASK INTENT
     if (msg.includes('finished') || msg.includes('completed') || msg.includes('done with') || msg.includes('turned in')) {
       let taskSnippet = 'assignment';
       if (msg.includes('essay')) taskSnippet = 'essay';
@@ -231,7 +228,7 @@ ${context}`;
       };
     }
 
-    // Intent 3: Struggle / Difficulty
+    // 3. STRUGGLE / DIFFICULTY INTENT
     if (msg.includes('struggling') || msg.includes('hard time') || msg.includes('confused') || msg.includes('trouble') || msg.includes('hate')) {
       let subject = 'Calculus';
       if (msg.includes('calc') || msg.includes('calculus')) subject = 'Calculus';
@@ -248,24 +245,58 @@ ${context}`;
       };
     }
 
-    // Intent 4: New Assignment / Task Mentioned
-    if (msg.includes('due') || msg.includes('read') || msg.includes('write') || msg.includes('paper') || msg.includes('project') || msg.includes('homework')) {
+    // 4. GENERAL TASK / ACTION INTENT ("must read", "do this", "need to write", "study _____", "have to finish", etc.)
+    const isTaskKeyword =
+      msg.includes('study') ||
+      msg.includes('read') ||
+      msg.includes('do ') ||
+      msg.includes('must ') ||
+      msg.includes('need to') ||
+      msg.includes('have to') ||
+      msg.includes('write') ||
+      msg.includes('paper') ||
+      msg.includes('homework') ||
+      msg.includes('project') ||
+      msg.includes('lab') ||
+      msg.includes('problem set') ||
+      msg.includes('review') ||
+      msg.includes('practice') ||
+      msg.includes('due');
+
+    if (isTaskKeyword || msg.length > 5) {
+      // Extract subject course name if present
+      let courseName = 'General Study';
+      if (msg.includes('chem') || msg.includes('chemistry')) courseName = 'Chemistry';
+      else if (msg.includes('calc') || msg.includes('math') || msg.includes('calculus')) courseName = 'Calculus';
+      else if (msg.includes('bio') || msg.includes('biology')) courseName = 'Biology';
+      else if (msg.includes('history')) courseName = 'History';
+      else if (msg.includes('physics')) courseName = 'Physics';
+      else if (msg.includes('english') || msg.includes('lit')) courseName = 'English';
+
+      // Parse accurate due date
+      const dueDate = parseNaturalDate(userMessage, 1);
+
+      // Clean task title
+      const cleanTitle = userMessage.charAt(0).toUpperCase() + userMessage.slice(1);
+
       await dbService.addTask({
-        title: userMessage.length > 50 ? userMessage.substring(0, 50) + '...' : userMessage,
+        title: cleanTitle,
+        courseName,
+        dueDate,
         estimatedMinutes: 45,
         priority: 'high',
       });
 
-      await memoryService.recordMemory('subject_note', `New task added: "${userMessage}"`);
+      await memoryService.recordMemory('subject_note', `Task added for ${new Date(dueDate).toLocaleDateString()}: "${cleanTitle}"`);
 
       return {
         intentType: 'add_task',
-        summary: `Saved new assignment to database & updated Today's Study Plan.`,
-        entities: { taskTitle: userMessage },
+        summary: `Added "${cleanTitle}" (Due: ${new Date(dueDate).toLocaleDateString()}) to database & updated Today's Study Plan.`,
+        entities: { subjectName: courseName, taskTitle: cleanTitle },
       };
     }
 
-    // Intent 5: General Context Note
+    // 5. General Fallback Context Note
     await memoryService.recordMemory('subject_note', `Student context note: "${userMessage}"`);
     return {
       intentType: 'general_chat',
@@ -284,6 +315,13 @@ ${context}`;
     if (action && action.entities?.taskTitle) {
       return {
         responseText: `I've added "${action.entities.taskTitle}" directly to your task backlog! I also recalculated Today's Study Plan so you can start right away on your Dashboard.`,
+        actionSummary: summary,
+      };
+    }
+
+    if (action && action.entities?.examTitle) {
+      return {
+        responseText: `I've recorded your ${action.entities.examTitle} in your academic calendar and adjusted your daily preparation schedule!`,
         actionSummary: summary,
       };
     }

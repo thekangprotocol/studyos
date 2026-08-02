@@ -32,7 +32,7 @@ export const AdvisorChat: React.FC = () => {
       const initialMessage: ChatMessage = {
         id: 'msg-welcome',
         role: 'assistant',
-        content: "I'm your AI Academic Chief of Staff. You can type commands like 'study biology' or 'study calculus for 60m', report finished tasks, or log upcoming exams. Every message automatically updates your academic memory and recalculates your daily study plan.",
+        content: "I'm your AI Academic Chief of Staff. Tell me anything about your academic life — e.g., 'I have a math test on Friday', 'must read biology chapter 4', 'do physics homework tomorrow', or 'finished chemistry lab'. I'll calculate the exact dates, add them to your workload backlog, and update Today's Study Plan!",
       };
       setMessages([initialMessage]);
     } else {
@@ -96,7 +96,7 @@ export const AdvisorChat: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-2xl font-black text-black dark:text-white tracking-tight font-heading">AI Chief of Staff</h2>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Type 'study ______' to instantly log & schedule study tasks</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Tell me any task, test, reading, or update in normal plain English</p>
               </div>
             </div>
 
@@ -205,7 +205,7 @@ export const AdvisorChat: React.FC = () => {
                   </div>
                   <div className="p-4 rounded-2xl text-sm bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-black dark:text-white flex items-center gap-2 animate-pulse font-bold">
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Extracting 'study _____' command, saving memory & updating Today's Study Plan...</span>
+                    <span>Parsing dates, adding to backlog & updating Today's Study Plan...</span>
                   </div>
                 </div>
               )}
@@ -213,15 +213,15 @@ export const AdvisorChat: React.FC = () => {
               <div ref={chatBottomRef} />
             </div>
 
-            {/* Quick Action Suggestion Chips for 'study ______' */}
+            {/* Quick Action Suggestion Chips for normal student updates */}
             <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800/80 mt-4 space-y-3">
               <div className="flex items-center gap-2 overflow-x-auto no-scrollbar text-xs pb-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 shrink-0">Quick Commands:</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 shrink-0">Quick Updates:</span>
                 {[
-                  'study biology',
-                  'study calculus for 60m',
-                  'study physics chapter 4',
-                  'study history presentation',
+                  'I have a math test on Friday',
+                  'Must read chapter 4 of biology',
+                  'Do physics homework tomorrow',
+                  'Finished chemistry lab report',
                 ].map((cmd) => (
                   <button
                     key={cmd}
@@ -242,7 +242,7 @@ export const AdvisorChat: React.FC = () => {
                     type="text"
                     value={inputVal}
                     onChange={(e) => setInputVal(e.target.value)}
-                    placeholder="Type 'study biology', 'study math for 1 hour', 'read chapter 4'..."
+                    placeholder="Type anything: 'I have a test on Friday', 'must read chapter 4', 'do physics homework'..."
                     className="w-full pl-4 pr-12 py-3.5 bg-white text-black dark:bg-black dark:text-white border border-zinc-300 dark:border-zinc-800 rounded-xl text-sm placeholder-zinc-400 focus:outline-none focus:border-black dark:focus:border-white transition-all font-medium"
                   />
                   <button
@@ -255,7 +255,7 @@ export const AdvisorChat: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between text-[11px] text-zinc-500 px-1 font-semibold">
-                  <span>Type 'study _____' to automatically add tasks & schedule your day</span>
+                  <span>Any task or test mentioned will automatically parse dates & schedule your day</span>
                   <span>Press Enter to send</span>
                 </div>
               </form>
