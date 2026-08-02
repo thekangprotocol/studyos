@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { Container } from './Container';
 import { formatTodayHeader } from '../utils/date';
-import { Compass, LogOut, User, LayoutDashboard, MessageSquare, Settings, Calendar } from 'lucide-react';
+import { Compass, LogOut, User, LayoutDashboard, MessageSquare, Settings, Calendar, CheckSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AccountSettingsModal } from './AccountSettingsModal';
 
 interface HeaderProps {
-  activeTab?: 'dashboard' | 'chat';
-  setActiveTab?: (tab: 'dashboard' | 'chat') => void;
+  activeTab?: 'dashboard' | 'tasks' | 'chat';
+  setActiveTab?: (tab: 'dashboard' | 'tasks' | 'chat') => void;
 }
 
 /**
  * Reusable Header Component
- * Displays StudyOS pitch black brand title, navigation tabs (Today's Mission vs Chief of Staff Chat), unsquished date, settings, and user logout.
+ * Displays StudyOS pitch black brand title, navigation tabs (Today's Mission vs All Tasks vs Chief of Staff Chat), settings, and user logout.
  */
 export const Header: React.FC<HeaderProps> = ({ activeTab = 'dashboard', setActiveTab }) => {
   const { user, signOut } = useAuth();
@@ -43,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'dashboard', setActi
               <div className="flex bg-zinc-900/80 p-1 rounded-xl border border-zinc-800 shrink-0">
                 <button
                   onClick={() => setActiveTab('dashboard')}
-                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     activeTab === 'dashboard'
                       ? 'bg-indigo-600 text-white shadow-md'
                       : 'text-zinc-400 hover:text-white'
@@ -52,9 +52,22 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'dashboard', setActi
                   <LayoutDashboard className="w-3.5 h-3.5" />
                   <span>Today's Mission</span>
                 </button>
+
+                <button
+                  onClick={() => setActiveTab('tasks')}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    activeTab === 'tasks'
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <CheckSquare className="w-3.5 h-3.5" />
+                  <span>All Tasks</span>
+                </button>
+
                 <button
                   onClick={() => setActiveTab('chat')}
-                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     activeTab === 'chat'
                       ? 'bg-indigo-600 text-white shadow-md'
                       : 'text-zinc-400 hover:text-white'
@@ -68,8 +81,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'dashboard', setActi
 
             {/* Right Side: Unsquished Date & Account Actions */}
             <div className="flex items-center gap-3 shrink-0">
-              {/* Unsquished Date Badge */}
-              <div className="hidden md:flex items-center shrink-0">
+              <div className="hidden lg:flex items-center shrink-0">
                 <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-400 bg-zinc-900/90 px-3.5 py-1.5 rounded-xl border border-zinc-800 whitespace-nowrap shadow-sm">
                   <Calendar className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
                   <span>{formatTodayHeader()}</span>

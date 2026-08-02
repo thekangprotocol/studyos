@@ -186,6 +186,81 @@ export const dbService = {
   },
 
   /**
+   * Fetch ALL tasks (both active and completed).
+   */
+  async getAllTasks(): Promise<StudyTask[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*, courses(title)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error || !data) return [];
+
+    return data.map((t: any) => ({
+      id: t.id,
+      subjectId: t.course_id || 'general',
+      subjectName: t.courses?.title || 'General Study',
+      title: t.title,
+      estimatedMinutes: t.estimated_minutes || 45,
+      priority: t.priority || 'medium',
+      completed: t.status === 'completed',
+      dueDate: t.due_date,
+    }));
+  },
+
+  /**
+   * Delete a task by ID.
+   */
+  async deleteTask(taskId: string): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', taskId)
+      .eq('user_id', user.id);
+
+    return !error;
+  },
+
+  /**
+   * Delete an exam by ID.
+   */
+  async deleteExam(examId: string): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { error } = await supabase
+      .from('exams')
+      .delete()
+      .eq('id', examId)
+      .eq('user_id', user.id);
+
+    return !error;
+  },
+
+  /**
+   * Toggle task completed status.
+   */
+  async toggleTaskStatus(taskId: string, completed: boolean): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { error } = await supabase
+      .from('tasks')
+      .update({ status: completed ? 'completed' : 'todo' })
+      .eq('id', taskId)
+      .eq('user_id', user.id);
+
+    return !error;
+  },
+
+  /**
    * Mark task complete matching title.
    */
   async markTaskCompleteByTitle(titleSnippet: string): Promise<boolean> {
@@ -338,7 +413,6 @@ export const dbService = {
 
     localStorage.removeItem(`onboarding_completed_${user.id}`);
 
-    // Delete user record from public.users (Cascades to courses, tasks, exams, memories, messages, plans)
     const { error } = await supabase
       .from('users')
       .delete()

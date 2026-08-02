@@ -5,19 +5,20 @@ import { Dashboard } from './pages/Dashboard';
 import { LandingPage } from './pages/LandingPage';
 import { Onboarding } from './pages/Onboarding';
 import { AdvisorChat } from './pages/AdvisorChat';
+import { TasksPage } from './pages/TasksPage';
 import { dbService } from './services/db.service';
 import type { UserProfile } from './types';
 import { Loader2 } from 'lucide-react';
 
 /**
  * Main Content Router
- * Manages Auth state, Onboarding redirection, and Navigation between Today's Mission & Advisor Chat.
+ * Manages Auth state, Onboarding redirection, and Navigation between Today's Mission, All Tasks & Advisor Chat.
  */
 const MainContent: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'chat'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'tasks' | 'chat'>('dashboard');
 
   useEffect(() => {
     if (user) {
@@ -50,7 +51,7 @@ const MainContent: React.FC = () => {
     return <LandingPage />;
   }
 
-  // 3. Authenticated butOnboarding incomplete -> Onboarding Page
+  // 3. Authenticated but Onboarding incomplete -> Onboarding Page
   if (profile && !profile.onboardingCompleted) {
     return <Onboarding onComplete={loadProfile} />;
   }
@@ -60,7 +61,9 @@ const MainContent: React.FC = () => {
     <div className="min-h-screen bg-black text-zinc-100 flex flex-col font-sans">
       <Header activeTab={activeTab} setActiveTab={setActiveTab} />
       <div className="flex-1">
-        {activeTab === 'dashboard' ? <Dashboard /> : <AdvisorChat />}
+        {activeTab === 'dashboard' && <Dashboard />}
+        {activeTab === 'tasks' && <TasksPage />}
+        {activeTab === 'chat' && <AdvisorChat />}
       </div>
     </div>
   );
