@@ -47,7 +47,8 @@ ${context}
 Directives:
 1. Keep responses concise, encouraging, and structured.
 2. Acknowledge that you have recorded their update into their StudyOS system and updated today's study plan.
-3. End responses with a clear recommendation for today.`;
+3. If the user said "study [subject/topic]", explicitly confirm that "Study [topic]" has been added to their backlog and scheduled for today.
+4. End responses with a clear recommendation for today.`;
 
         const fullPrompt = `${systemPrompt}\n\nConversation History:\n${history.slice(-6).map((m) => `${m.role}: ${m.content}`).join('\n')}\n\nUser: ${userMessage}`;
 
@@ -120,10 +121,69 @@ ${context}`;
 
   /**
    * Universal intent & entity parser.
-   * Extracts exams, completed tasks, new tasks, or general context notes, and saves to Supabase.
+   * Extracts "study _____" commands, exams, completed tasks, new tasks, or general context notes, and saves to Supabase.
    */
   async extractAndApplyIntent(userMessage: string): Promise<ExtractedIntent | null> {
-    const msg = userMessage.toLowerCase();
+    const msg = userMessage.toLowerCase().trim();
+
+    // Intent 0: "study _____" Direct Command Action Trigger
+    if (msg.includes('study')) {
+      let rawTopic = msg;
+      // Strip common prefixes: "i want to study", "i need to study", "please study", "study"
+      rawTopic = rawTopic
+        .replace(/^(i\s+want\s+to\s+study|i\s+need\s+to\s+study|can\s+we\s+study|let's\s+study|please\s+study|study)\s+/i, '')
+        .replace(/^study\s+/i, '')
+        .trim();
+
+      // Extract duration if mentioned (e.g. "for 60 mins", "for 1 hour", "30 minutes")
+      let minutes = 45;
+      const hourMatch = rawTopic.match(/(\d+)\s*(hour|hr|hrs)/i);
+      const minMatch = rawTopic.match(/(\d+)\s*(min|mins|minute|minutes|m)/i);
+
+      if (hourMatch) {
+        minutes = parseInt(hourMatch[1], 10) * 60;
+      } else if (minMatch) {
+        minutes = parseInt(minMatch[1], 10);
+      }
+
+      // Clean topic text by removing duration phrases
+      let cleanTopic = rawTopic
+        .replace(/for\s+\d+\s*(hour|hr|hrs|min|mins|minute|minutes|m)/gi, '')
+        .replace(/\d+\s*(hour|hr|hrs|min|mins|minute|minutes|m)/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (!cleanTopic || cleanTopic === 'study') {
+        cleanTopic = 'General Topic';
+      }
+
+      // Capitalize first letter of each word in subject/topic
+      const capitalizedTopic = cleanTopic
+        .split(' ')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+
+      const taskTitle = capitalizedTopic.toLowerCase().startsWith('study')
+        ? capitalizedTopic
+        : `Study ${capitalizedTopic}`;
+
+      // Insert into Supabase tasks table
+      await dbService.addTask({
+        title: taskTitle,
+        courseName: capitalizedTopic,
+        estimatedMinutes: minutes,
+        priority: 'high',
+      });
+
+      // Record in long-term academic memory
+      await memoryService.recordMemory('goal', `User requested study session: "${taskTitle}" (${minutes} mins)`);
+
+      return {
+        intentType: 'add_task',
+        summary: `Added "${taskTitle}" (${minutes}m) to your backlog & scheduled in Today's Study Plan.`,
+        entities: { subjectName: capitalizedTopic, taskTitle, estimatedMinutes: minutes },
+      };
+    }
 
     // Intent 1: Exam / Quiz / Test
     if (msg.includes('quiz') || msg.includes('exam') || msg.includes('test') || msg.includes('midterm')) {
@@ -217,7 +277,17 @@ ${context}`;
   /**
    * Resilient fallback advisor response.
    */
-  generateFallbackAdvisorResponse(action: ExtractedIntent | null, summary: string): { responseText: string; actionSummary: string } {
+  generateFallbackAdvisorResponse(
+    action: ExtractedIntent | null,
+    summary: string
+  ): { responseText: string; actionSummary: string } {
+    if (action && action.entities?.taskTitle) {
+      return {
+        responseText: `I've added "${action.entities.taskTitle}" directly to your task backlog! I also recalculated Today's Study Plan so you can start right away on your Dashboard.`,
+        actionSummary: summary,
+      };
+    }
+
     return {
       responseText: action
         ? `Got it! I've processed your update: "${action.summary}" Your StudyOS daily plan is automatically updated to reflect this!`

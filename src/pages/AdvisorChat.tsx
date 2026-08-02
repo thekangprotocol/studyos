@@ -3,7 +3,7 @@ import { Container } from '../components/Container';
 import { dbService } from '../services/db.service';
 import { openAIService } from '../services/openai.service';
 import type { ChatMessage, StudentMemory } from '../types';
-import { Compass, Sparkles, Send, Loader2, CheckCircle2, User, Database, BrainCircuit, RefreshCw } from 'lucide-react';
+import { Compass, Sparkles, Send, Loader2, CheckCircle2, User, Database, BrainCircuit, RefreshCw, Zap } from 'lucide-react';
 
 export const AdvisorChat: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -32,7 +32,7 @@ export const AdvisorChat: React.FC = () => {
       const initialMessage: ChatMessage = {
         id: 'msg-welcome',
         role: 'assistant',
-        content: "I'm your AI Academic Chief of Staff. You can tell me about upcoming quizzes, assignments you've finished, or subjects you're struggling with. Every message automatically updates your academic memory and recalculates your daily study plan.",
+        content: "I'm your AI Academic Chief of Staff. You can type commands like 'study biology' or 'study calculus for 60m', report finished tasks, or log upcoming exams. Every message automatically updates your academic memory and recalculates your daily study plan.",
       };
       setMessages([initialMessage]);
     } else {
@@ -41,9 +41,8 @@ export const AdvisorChat: React.FC = () => {
     setInitialLoading(false);
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const text = inputVal.trim();
+  const handleSendMessageText = async (textToSend: string) => {
+    const text = textToSend.trim();
     if (!text || loading) return;
 
     const userMsg: ChatMessage = {
@@ -80,6 +79,11 @@ export const AdvisorChat: React.FC = () => {
     }
   };
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSendMessageText(inputVal);
+  };
+
   return (
     <main className="py-8 sm:py-12 pb-24 text-zinc-900 dark:text-zinc-100 bg-white dark:bg-black min-h-[calc(100vh-80px)] flex flex-col transition-colors">
       <Container>
@@ -92,7 +96,7 @@ export const AdvisorChat: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-2xl font-black text-black dark:text-white tracking-tight font-heading">AI Chief of Staff</h2>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Long-Term Academic Advisor & Memory Interface</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Type 'study ______' to instantly log & schedule study tasks</p>
               </div>
             </div>
 
@@ -201,7 +205,7 @@ export const AdvisorChat: React.FC = () => {
                   </div>
                   <div className="p-4 rounded-2xl text-sm bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-black dark:text-white flex items-center gap-2 animate-pulse font-bold">
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Extracting entities, saving memory & recalculating Today's Study Plan...</span>
+                    <span>Extracting 'study _____' command, saving memory & updating Today's Study Plan...</span>
                   </div>
                 </div>
               )}
@@ -209,30 +213,53 @@ export const AdvisorChat: React.FC = () => {
               <div ref={chatBottomRef} />
             </div>
 
-            {/* Input Form */}
-            <form onSubmit={handleSendMessage} className="pt-4 border-t border-zinc-200 dark:border-zinc-800/80 mt-4 space-y-2">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={inputVal}
-                  onChange={(e) => setInputVal(e.target.value)}
-                  placeholder="e.g. 'I have a chemistry quiz Friday', 'Read chapter 4 of biology'..."
-                  className="w-full pl-4 pr-12 py-3.5 bg-white text-black dark:bg-black dark:text-white border border-zinc-300 dark:border-zinc-800 rounded-xl text-sm placeholder-zinc-400 focus:outline-none focus:border-black dark:focus:border-white transition-all font-medium"
-                />
-                <button
-                  type="submit"
-                  disabled={loading || !inputVal.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black text-white dark:bg-white dark:text-black rounded-lg transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
+            {/* Quick Action Suggestion Chips for 'study ______' */}
+            <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800/80 mt-4 space-y-3">
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar text-xs pb-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 shrink-0">Quick Commands:</span>
+                {[
+                  'study biology',
+                  'study calculus for 60m',
+                  'study physics chapter 4',
+                  'study history presentation',
+                ].map((cmd) => (
+                  <button
+                    key={cmd}
+                    type="button"
+                    onClick={() => handleSendMessageText(cmd)}
+                    className="px-3 py-1 bg-white text-black dark:bg-black dark:text-white border border-zinc-200 dark:border-zinc-800 rounded-full font-bold hover:border-black dark:hover:border-white transition-all shrink-0 flex items-center gap-1 shadow-sm"
+                  >
+                    <Zap className="w-3 h-3 text-zinc-400" />
+                    <span>"{cmd}"</span>
+                  </button>
+                ))}
               </div>
 
-              <div className="flex items-center justify-between text-[11px] text-zinc-500 px-1 font-semibold">
-                <span>Every message updates your academic memory & Today's Study Plan</span>
-                <span>Press Enter to send</span>
-              </div>
-            </form>
+              {/* Input Form */}
+              <form onSubmit={handleFormSubmit} className="space-y-2">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={inputVal}
+                    onChange={(e) => setInputVal(e.target.value)}
+                    placeholder="Type 'study biology', 'study math for 1 hour', 'read chapter 4'..."
+                    className="w-full pl-4 pr-12 py-3.5 bg-white text-black dark:bg-black dark:text-white border border-zinc-300 dark:border-zinc-800 rounded-xl text-sm placeholder-zinc-400 focus:outline-none focus:border-black dark:focus:border-white transition-all font-medium"
+                  />
+                  <button
+                    type="submit"
+                    disabled={loading || !inputVal.trim()}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black text-white dark:bg-white dark:text-black rounded-lg transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-zinc-500 px-1 font-semibold">
+                  <span>Type 'study _____' to automatically add tasks & schedule your day</span>
+                  <span>Press Enter to send</span>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </Container>

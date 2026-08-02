@@ -96,5 +96,6 @@ export interface ExtractedIntent {
     examTitle?: string;
     examDate?: string;
     challengeNote?: string;
+    estimatedMinutes?: number;
   };
 }
