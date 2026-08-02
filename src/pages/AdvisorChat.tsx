@@ -3,7 +3,7 @@ import { Container } from '../components/Container';
 import { dbService } from '../services/db.service';
 import { openAIService } from '../services/openai.service';
 import type { ChatMessage, StudentMemory } from '../types';
-import { Compass, Sparkles, Send, Loader2, CheckCircle2, User, Database, BrainCircuit, RefreshCw, Zap } from 'lucide-react';
+import { Compass, Sparkles, Send, Loader2, CheckCircle2, User, Database, BrainCircuit, RefreshCw, Zap, Trash2 } from 'lucide-react';
 
 export const AdvisorChat: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -12,6 +12,7 @@ export const AdvisorChat: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [showMemoryDrawer, setShowMemoryDrawer] = useState(false);
+  const [clearMsg, setClearMsg] = useState<string | null>(null);
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,6 +40,18 @@ export const AdvisorChat: React.FC = () => {
       setMessages(history);
     }
     setInitialLoading(false);
+  };
+
+  const handleClearChat = async () => {
+    await dbService.clearChatHistory();
+    const initialMessage: ChatMessage = {
+      id: `msg-welcome-${Date.now()}`,
+      role: 'assistant',
+      content: "Chat history cleared. I'm ready for your next academic update or study command!",
+    };
+    setMessages([initialMessage]);
+    setClearMsg('Chat history cleared!');
+    setTimeout(() => setClearMsg(null), 3000);
   };
 
   const handleSendMessageText = async (textToSend: string) => {
@@ -109,12 +122,24 @@ export const AdvisorChat: React.FC = () => {
                 <span>{memories.length} Memories Stored</span>
               </button>
 
-              <span className="text-xs font-bold text-black dark:text-white bg-zinc-100 dark:bg-zinc-900 px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-black dark:bg-white animate-ping" />
-                Live Plan Sync
-              </span>
+              <button
+                onClick={handleClearChat}
+                title="Clear Chat History"
+                className="text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 flex items-center gap-1.5 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Clear Chat</span>
+              </button>
             </div>
           </div>
+
+          {/* Toast Notification */}
+          {clearMsg && (
+            <div className="p-3 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs font-bold text-black dark:text-white flex items-center gap-2 animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span>{clearMsg}</span>
+            </div>
+          )}
 
           {/* MEMORY DRAWER MODAL */}
           {showMemoryDrawer && (

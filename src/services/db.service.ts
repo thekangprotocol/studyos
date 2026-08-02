@@ -405,6 +405,21 @@ export const dbService = {
   },
 
   /**
+   * Clear all conversation messages for user.
+   */
+  async clearChatHistory(): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { error } = await supabase
+      .from('conversation_messages')
+      .delete()
+      .eq('user_id', user.id);
+
+    return !error;
+  },
+
+  /**
    * Delete user account data permanently from Supabase & Local Storage.
    */
   async deleteUserAccount(): Promise<boolean> {
